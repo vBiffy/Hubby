@@ -1,0 +1,914 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+/* Theme tokens are the single place to tune spacing, color and touch sizing.
+   System fonts remain usable when the kitchen hub has no internet access. */
+:root {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  color: #263b33;
+  background: #f5f4ef;
+  font-synthesis: none;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+button,
+a,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+button {
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 14px;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+button:hover {
+  filter: brightness(0.94);
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+a {
+  color: inherit;
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+.app {
+  --surface: #fffefa;
+  --background: #f5f4ef;
+  --ink: #263b33;
+  --subtle: #707c74;
+  --line: #e4e7df;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  background: var(--background);
+  color: var(--ink);
+}
+.dark {
+  --surface: #24332c;
+  --background: #18251e;
+  --ink: #edf1e8;
+  --subtle: #b5c2b7;
+  --line: #415248;
+}
+.large {
+  font-size: 19px;
+}
+aside {
+  padding: 34px 22px;
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.brand {
+  text-decoration: none;
+  font-family: Manrope, system-ui;
+  font-size: 30px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.brand-icon {
+  background: var(--accent);
+  color: white;
+  border-radius: 14px;
+  padding: 3px 11px;
+}
+.eyebrow {
+  font-size: 10px;
+  letter-spacing: 2px;
+  font-weight: 700;
+  color: var(--subtle);
+}
+nav {
+  display: grid;
+  gap: 8px;
+}
+nav a {
+  min-height: 52px;
+  padding: 14px;
+  text-decoration: none;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+nav a.active {
+  background: var(--accent);
+  color: white;
+}
+nav a span {
+  font-size: 23px;
+}
+.sidebar-bottom {
+  margin-top: auto;
+  font-size: 12px;
+  color: var(--subtle);
+  line-height: 1.8;
+}
+.status-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  background: #87a47e;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+main {
+  min-width: 0;
+  padding: 36px 40px;
+}
+header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 28px;
+}
+h1,
+h2,
+h3 {
+  font-family: Manrope, system-ui;
+  margin: 0;
+  font-weight: 700;
+}
+h1 {
+  font-size: 28px;
+  letter-spacing: -1px;
+}
+h2 {
+  font-size: 20px;
+}
+h3 {
+  font-size: 17px;
+}
+header time {
+  font-size: 24px;
+  color: var(--subtle);
+  white-space: nowrap;
+}
+.welcome {
+  padding: 26px 30px;
+  background: #e7ecdf;
+  color: #263b33;
+  border-radius: 18px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.welcome h2 {
+  font-size: 25px;
+}
+.welcome p:last-child {
+  margin-bottom: 0;
+  color: #65715e;
+}
+.primary {
+  background: var(--accent);
+  color: white;
+  border-color: transparent;
+}
+.dashboard {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(280px, 1fr);
+  gap: 24px;
+}
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 24px;
+  margin-bottom: 22px;
+  min-width: 0;
+}
+.panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.panel-heading h2 span {
+  color: var(--subtle);
+  font-size: 13px;
+  margin-left: 8px;
+}
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+.weekday {
+  text-align: center;
+  font-size: 12px;
+  color: var(--subtle);
+  padding: 10px 0;
+}
+.day {
+  min-height: 86px;
+  padding: 8px 4px;
+  text-align: left;
+  overflow: hidden;
+  border-color: transparent;
+  background: transparent;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.day-date > span {
+  font-size: 13px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+}
+.day.today .day-date > span {
+  background: var(--accent);
+  color: white;
+  border-radius: 50%;
+}
+.day.muted {
+  opacity: 0.45;
+}
+.day .calendar-event {
+  font-size: 10px;
+  border-radius: 4px;
+  background: #e8eddc;
+  color: #364b2d;
+  padding: 3px;
+  width: 100%;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.hint {
+  font-size: 12px;
+  color: var(--subtle);
+  margin-bottom: 0;
+}
+.empty {
+  color: var(--subtle);
+  line-height: 1.7;
+  font-size: 14px;
+}
+.agenda-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+.date-badge {
+  width: 46px;
+  padding: 10px 4px;
+  background: var(--background);
+  border-radius: 10px;
+  font-size: 12px;
+  text-align: center;
+}
+.agenda-content {
+  flex: 1;
+  min-width: 0;
+}
+.agenda-content small {
+  display: block;
+  color: var(--subtle);
+  font-size: 12px;
+}
+.event-title {
+  border: 0;
+  background: none;
+  text-align: left;
+  padding: 0;
+  overflow-wrap: anywhere;
+}
+.completed {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+.note-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+.note {
+  background: #f5efdb;
+  color: #4c4937;
+  padding: 18px;
+  border-radius: 12px;
+}
+.note p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.65;
+  font-size: 14px;
+}
+.note button {
+  background: transparent;
+  color: inherit;
+}
+.truncate {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.text-button {
+  border: 0;
+  margin-top: 15px;
+  padding-left: 0;
+  color: var(--accent);
+}
+label {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0;
+  font-size: 14px;
+}
+input,
+textarea,
+select {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--background);
+  color: var(--ink);
+}
+textarea {
+  resize: vertical;
+}
+.editor {
+  margin-bottom: 24px;
+}
+.settings {
+  max-width: 640px;
+}
+.settings p {
+  color: var(--subtle);
+  line-height: 1.6;
+}
+.toggle {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+}
+.toggle input {
+  width: 24px;
+  min-height: 24px;
+  accent-color: var(--accent);
+}
+input[type='color'] {
+  width: 100px;
+}
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: #10291d80;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  z-index: 10;
+}
+.dialog {
+  width: min(500px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+}
+.error {
+  padding: 14px;
+  background: #fce8df;
+  color: #8c3526;
+  border-radius: 10px;
+}
+.large .day {
+  min-height: 104px;
+}
+@media (min-width: 1600px) {
+  main {
+    max-width: 1600px;
+    width: 100%;
+    margin: auto;
+  }
+}
+@media (max-width: 1100px) {
+  .app {
+    grid-template-columns: 180px 1fr;
+  }
+  aside {
+    padding: 24px 14px;
+  }
+  main {
+    padding: 24px;
+  }
+  .dashboard {
+    grid-template-columns: 1fr;
+  }
+  .widgets {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .welcome {
+    padding: 22px;
+  }
+}
+@media (max-width: 650px) {
+  .app {
+    display: block;
+  }
+  aside {
+    padding: 14px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    gap: 12px;
+  }
+  aside > .eyebrow,
+  .sidebar-bottom {
+    display: none;
+  }
+  .brand {
+    font-size: 22px;
+  }
+  nav {
+    display: flex;
+    overflow: auto;
+  }
+  nav a {
+    padding: 8px 12px;
+    white-space: nowrap;
+    font-size: 12px;
+    min-height: 44px;
+  }
+  nav a span {
+    display: none;
+  }
+  main {
+    padding: 16px;
+  }
+  h1 {
+    font-size: 23px;
+  }
+  header time {
+    font-size: 18px;
+  }
+  .welcome {
+    display: block;
+  }
+  .welcome button {
+    margin-top: 18px;
+  }
+  .widgets {
+    display: block;
+  }
+  .panel {
+    padding: 16px;
+  }
+  .day {
+    min-height: 76px;
+    padding: 3px;
+  }
+  .day .calendar-event {
+    font-size: 9px;
+  }
+  .panel-heading {
+    flex-wrap: wrap;
+  }
+  .calendar .actions button {
+    padding: 8px 12px;
+  }
+}
+
+/* Custom date/time controls inherit theme tokens, including the user's accent.
+   An inline calendar stays within the editor on small touchscreen displays. */
+.datetime-picker {
+  border: 0;
+  padding: 0;
+  margin: 20px 0;
+  min-width: 0;
+}
+.datetime-picker legend {
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+.picker-date {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+  padding: 14px 16px;
+  background: var(--background);
+}
+.picker-date > span:last-child {
+  font-size: 24px;
+  color: var(--ink);
+}
+.picker-caption {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--subtle);
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.picker-calendar {
+  margin-top: 10px;
+  padding: 12px;
+  background: var(--background);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.picker-month {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.picker-month strong {
+  font-size: 14px;
+  text-align: center;
+}
+.picker-month button {
+  width: 44px;
+  padding: 6px;
+  font-size: 22px;
+}
+.picker-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+}
+.picker-weekday {
+  text-align: center;
+  padding: 6px 0;
+  color: var(--subtle);
+  font-size: 12px;
+}
+.picker-day {
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  padding: 4px;
+  font-size: 14px;
+  min-width: 0;
+}
+.picker-day.outside-month {
+  color: var(--subtle);
+}
+.picker-day[aria-current='date'] {
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.picker-day[aria-pressed='true'] {
+  background: var(--accent);
+  color: white;
+}
+.picker-today {
+  margin-top: 10px;
+  width: 100%;
+}
+.picker-time {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px;
+  margin-top: 12px;
+  background: var(--background);
+}
+.picker-time-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.picker-stepper {
+  display: flex;
+  flex: 1;
+  align-items: flex-end;
+  gap: 4px;
+}
+.picker-stepper > button {
+  width: 44px;
+  flex-shrink: 0;
+  padding: 6px;
+  min-height: 48px;
+  font-size: 20px;
+}
+.picker-number {
+  flex: 1;
+  min-width: 48px;
+  margin: 0;
+  gap: 4px;
+}
+.picker-number > span {
+  font-size: 11px;
+  color: var(--subtle);
+}
+.picker-number input {
+  text-align: center;
+  padding: 8px 2px;
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+.picker-number input::-webkit-inner-spin-button,
+.picker-number input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.large .datetime-picker legend,
+.large .picker-day,
+.large .picker-month strong {
+  font-size: 17px;
+}
+@media (max-width: 400px) {
+  .picker-time-fields {
+    flex-direction: column;
+  }
+  .picker-calendar {
+    padding: 8px;
+  }
+}
+
+/* Grocery feature uses the same theme tokens as notes and calendar. */
+.groceries {
+  max-width: 960px;
+}
+.grocery-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
+  padding-bottom: 24px;
+}
+.grocery-form label {
+  flex: 1 1 200px;
+  margin: 0;
+}
+.grocery-form .actions {
+  min-height: 48px;
+}
+.grocery-optional {
+  color: var(--subtle);
+  font-size: 12px;
+}
+.grocery-items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.grocery-item {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--line);
+  padding: 14px 0;
+}
+.grocery-check {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  margin: 0;
+  cursor: pointer;
+  font-size: inherit;
+}
+.grocery-check input {
+  width: 26px;
+  min-height: 26px;
+  flex-shrink: 0;
+  accent-color: var(--accent);
+}
+.grocery-check span {
+  overflow-wrap: anywhere;
+}
+.grocery-check small {
+  display: block;
+  color: var(--subtle);
+  margin-top: 4px;
+  font-size: 13px;
+}
+@media (max-width: 650px) {
+  .grocery-item {
+    flex-wrap: wrap;
+  }
+  .grocery-item .actions {
+    margin-left: 40px;
+  }
+}
+
+/* Shared weather views inherit all display preferences from the app theme. */
+.weather-summary {
+  display: grid;
+  gap: 4px;
+  min-height: 64px;
+  padding: 10px 18px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  text-decoration: none;
+  margin-left: auto;
+}
+.weather-summary .picker-caption {
+  margin: 0;
+}
+.weather-summary strong {
+  font-size: 22px;
+}
+.weather-summary > span:not(.picker-caption),
+.weather-summary small {
+  color: var(--subtle);
+  font-size: 12px;
+}
+.weather-panel {
+  max-width: 900px;
+}
+.weather-current {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  margin: 30px 0;
+}
+.weather-current > strong {
+  font-size: clamp(48px, 8vw, 76px);
+  font-weight: 500;
+}
+.weather-current p {
+  color: var(--subtle);
+  margin: 8px 0;
+}
+.weather-details {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.weather-details > div {
+  background: var(--background);
+  border-radius: 12px;
+  padding: 18px;
+}
+.weather-details dt {
+  color: var(--subtle);
+  font-size: 13px;
+}
+.weather-details dd {
+  margin: 10px 0 0;
+  font-size: 24px;
+}
+@media (max-width: 850px) {
+  header {
+    flex-wrap: wrap;
+  }
+  .weather-details {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 650px) {
+  header > div:first-child {
+    width: 100%;
+  }
+  .weather-summary {
+    margin-left: 0;
+    flex: 1;
+  }
+  .weather-current {
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+}
+
+/* Family colors remain visible in both themes; labels supplement the colors. */
+.member-swatch {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+.member-color-fields {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.member-color-fields > input[type='color'] {
+  flex: 0 0 80px;
+}
+.family-members form {
+  margin-bottom: 24px;
+}
+.family-legend {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+.family-legend > span {
+  font-size: 12px;
+  color: var(--subtle);
+}
+.picker-period {
+  margin: 0;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--subtle);
+}
+.picker-period select {
+  min-width: 85px;
+  font-size: 16px;
+}
+
+/* Labels distinguish Tuesday and Thursday and remain easy to tap. */
+.repeat-weekdays {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px;
+  margin: 20px 0;
+  min-width: 0;
+}
+.repeat-weekdays legend {
+  font-size: 14px;
+  padding: 0 6px;
+}
+.repeat-day-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.repeat-day-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  min-height: 44px;
+  padding: 8px;
+  background: var(--background);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.repeat-day-option input {
+  width: 20px;
+  min-height: 20px;
+  accent-color: var(--accent);
+}
+
+/* Separate date and entry buttons avoid nested buttons and support keyboard use. */
+.day-date {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  width: 100%;
+}
+.day .calendar-event {
+  min-height: 44px;
+  border: 0;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.day-more {
+  padding: 4px;
+  font-size: 11px;
+  border: 0;
+  background: transparent;
+}
