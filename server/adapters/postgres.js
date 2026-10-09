@@ -39,5 +39,14 @@ export function createPostgresRepository(pool) {
       const r = await pool.query('DELETE FROM hub_items WHERE kind = $1 AND id = $2', [kind, id]);
       return r.rowCount > 0;
     },
+    async restore(kind, item) {
+      // Undo must insert only: concurrent restores must never overwrite data.
+      const result = await pool.query(
+        `INSERT INTO hub_items (id, kind, payload, updated_at)
+         VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING RETURNING id`,
+        [item.id, kind, item, item.updatedAt],
+      );
+      if (!result.rowCount) throw new ValidationError('This item already exists.');
+    },
   };
 }

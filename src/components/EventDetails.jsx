@@ -1,12 +1,21 @@
 import { useEffect, useId, useRef } from 'react';
-import { weekdays, eventStyle } from '../../shared/calendar.js';
+import { weekdays, planStyle, planMemberLabel, assignedMemberIds } from '../../shared/calendar.js';
 
-// Show the clicked occurrence's date, while Edit still opens its source series.
-export function EventDetails({ item, members, onEdit, onDelete, onClose, busy, error }) {
+// Scope is controlled by the shell; this view remains independent of storage.
+export function EventDetails({
+  item,
+  members,
+  onEdit,
+  onDelete,
+  onClose,
+  busy,
+  error,
+  scope = 'occurrence',
+  onScope,
+}) {
   const dialog = useRef(null);
   const id = useId();
   const type = item.type === 'reminder' ? 'Reminder' : 'Event';
-  const member = members.find((person) => person.id === item.memberId);
   const repeat = item.repeat || 'none';
   const schedule =
     repeat === 'custom'
@@ -37,8 +46,11 @@ export function EventDetails({ item, members, onEdit, onDelete, onClose, busy, e
     >
       <p className="eyebrow">{type.toUpperCase()} DETAILS</p>
       <h2 id={`${id}-title`}>{item.title}</h2>
-      <span className="reminder-type" style={eventStyle(member)}>
-        {member?.title || 'Whole household'}
+      <span
+        className={`reminder-type ${assignedMemberIds(item).length > 1 ? 'shared-event' : ''}`}
+        style={planStyle(item, members)}
+      >
+        <span className="calendar-event-label">{planMemberLabel(item, members)}</span>
       </span>
       <dl className="event-summary">
         <div>
@@ -49,9 +61,7 @@ export function EventDetails({ item, members, onEdit, onDelete, onClose, busy, e
               month: 'long',
               day: 'numeric',
               year: 'numeric',
-              hour: 'numeric',
-              minute: '2-digit',
-              hour12: true,
+              ...(item.allDay ? {} : { hour: 'numeric', minute: '2-digit', hour12: true }),
             })}
           </dd>
         </div>
@@ -83,7 +93,25 @@ export function EventDetails({ item, members, onEdit, onDelete, onClose, busy, e
           <dd>{item.done ? 'Completed' : 'Planned'}</dd>
         </div>
       </dl>
-      {repeat !== 'none' && <p className="hint">Editing or deleting affects the whole series.</p>}
+      {repeat !== 'none' && onScope && (
+        <label>
+          Apply edit or delete to
+          <select value={scope} onChange={(event) => onScope(event.target.value)}>
+            <option value="occurrence">Only this occurrence</option>
+            <option value="series">Entire series</option>
+          </select>
+        </label>
+      )}
+      {item.allDay && <p>All-day plan</p>}
+      {item.endsAt && (
+        <p>
+          Ends{' '}
+          {new Date(item.endsAt).toLocaleString(undefined, {
+            dateStyle: 'medium',
+            ...(item.allDay ? {} : { timeStyle: 'short' }),
+          })}
+        </p>
+      )}
       {error && (
         <p className="error" role="alert">
           {error}

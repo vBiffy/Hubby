@@ -1,4 +1,10 @@
-import { occurrences, eventStyle, weekdays } from '../../shared/calendar.js';
+import {
+  occurrences,
+  planStyle,
+  planMemberLabel,
+  assignedMemberIds,
+  weekdays,
+} from '../../shared/calendar.js';
 import { useState } from 'react';
 
 export function Agenda({ items, onEdit, onSave, onDelete, compact = false, members = [] }) {
@@ -39,13 +45,15 @@ export function Agenda({ items, onEdit, onSave, onDelete, compact = false, membe
       {visible.map((item) => (
         <article key={item.occurrenceKey} className="agenda-item">
           <div
-            className="date-badge"
-            style={eventStyle(members.find((member) => member.id === item.memberId))}
+            className={`date-badge ${assignedMemberIds(item).length > 1 ? 'shared-event' : ''}`}
+            style={planStyle(item, members)}
           >
-            {new Date(item.startsAt).toLocaleDateString(undefined, {
-              month: 'short',
-              day: 'numeric',
-            })}
+            <span className="calendar-event-label">
+              {new Date(item.startsAt).toLocaleDateString(undefined, {
+                month: 'short',
+                day: 'numeric',
+              })}
+            </span>
           </div>
           <div className="agenda-content">
             <button
@@ -56,13 +64,14 @@ export function Agenda({ items, onEdit, onSave, onDelete, compact = false, membe
             </button>
             <small>
               {item.type} ·{' '}
-              {new Date(item.startsAt).toLocaleTimeString(undefined, {
-                hour: 'numeric',
-                minute: '2-digit',
-                hour12: true,
-              })}
-              {item.memberId &&
-                ` ? ${members.find((member) => member.id === item.memberId)?.title}`}
+              {item.allDay
+                ? 'All day'
+                : new Date(item.startsAt).toLocaleTimeString(undefined, {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true,
+                  })}
+              {assignedMemberIds(item).length > 0 && ` · ${planMemberLabel(item, members)}`}
               {item.repeat && item.repeat !== 'none' && ' ? Repeats'}
               {item.repeat === 'custom' &&
                 ` ${item.repeatDays.map((day) => weekdays[day].slice(0, 3)).join('/')}`}
@@ -78,7 +87,7 @@ export function Agenda({ items, onEdit, onSave, onDelete, compact = false, membe
             <button
               aria-label={`Delete ${item.title}${item.repeat && item.repeat !== 'none' ? ' (whole series)' : ''}`}
               onClick={() => {
-                if (window.confirm(`Delete “${item.title}”?`)) act(() => onDelete(item.id));
+                onDelete(item);
               }}
             >
               ×
@@ -88,8 +97,8 @@ export function Agenda({ items, onEdit, onSave, onDelete, compact = false, membe
       ))}
       {!compact && (
         <p className="hint">
-          Showing the last 30 days and the next year. Editing or deleting a repeating plan affects
-          the whole series.
+          Showing the last 30 days and the next year. Choose an occurrence or the entire series when
+          editing or deleting a repeating plan.
         </p>
       )}
       {!visible.length && <p className="empty">Nothing planned. Make room for something good.</p>}

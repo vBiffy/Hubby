@@ -131,3 +131,20 @@ The Customize tab controls hub name, accent color, dark mode, larger text, week 
 See [architecture and React basics](docs/ARCHITECTURE.md) for the code layout, ports, adapters, and extension steps. Comments explain boundaries and non-obvious behavior. References: [React basics](https://react.dev/learn), [React with Vite](https://react.dev/learn/build-a-react-app-from-scratch), [parameterized PostgreSQL queries](https://node-postgres.com/features/queries).
 
 Current scope: calendar entries support timed single occurrences and recurring series. In-app popup reminders require an open app. Shared data refreshes every 30 seconds, writes need the API, and concurrent edits use last-write-wins. External calendar sync, accounts, and OS notifications are future extensions.
+
+# Calendar planning
+
+The calendar offers month, week, and day views and a family filter. Click an entry
+to see its details. For repeating plans, choose **Only this occurrence** or
+**Entire series** before editing or deleting. Individual edits, moves, and deleted
+occurrences remain separate from the repeat schedule.
+
+Enable **All day** for date-based plans, or **Set an end date/time** for a duration
+or a multi-day span. All-day end dates include the entire final day. Their popup
+reminders use 9 AM on the first day as the reference time. Overlap warnings apply
+to events for the same person or the whole household and allow saving anyway.
+
+Moves and deletions offer **Undo** for 30 seconds. Undo preserves the original
+event ID and refuses to overwrite a newer edit. It is available in the current
+session only. These fields use the existing PostgreSQL JSON records, so no schema
+migration is needed; existing events continue to work.

@@ -24,4 +24,10 @@ export const api = {
   remove(kind, id) {
     return this.request(`${kind}/${id}`, { method: 'DELETE' });
   },
+  restore(item) {
+    return this.request(`events/${item.id}/restore`, {
+      method: 'POST',
+      body: JSON.stringify(item),
+    });
+  },
 };

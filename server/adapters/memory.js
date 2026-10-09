@@ -24,5 +24,9 @@ export function createMemoryRepository() {
     async remove(kind, id) {
       return data[kind].delete(id);
     },
+    async restore(kind, item) {
+      if (data[kind].has(item.id)) throw new ValidationError('This item already exists.');
+      data[kind].set(item.id, structuredClone(item));
+    },
   };
 }

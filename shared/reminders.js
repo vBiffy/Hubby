@@ -22,12 +22,17 @@ export function dueReminders(events, actions, now) {
       if (event.done || !Number.isInteger(minutes) || minutes < 0 || minutes > maxReminderMinutes)
         return [];
       const startsAt = Date.parse(event.startsAt);
-      const dueAt = startsAt - minutes * 60 * 1000;
+      const scheduled = new Date(startsAt);
+      // All-day plans alert relative to 9 AM, rather than waking the kitchen at midnight.
+      if (event.allDay) scheduled.setHours(9, 0, 0, 0);
+      const dueAt = scheduled.getTime() - minutes * 60 * 1000;
       // A changed start time or lead time creates a new notification identity.
       // Editing a title/member alone should not resurrect a dismissed reminder.
-      const movedFrom = event.occurrenceMoves?.[event.occurrenceDate]
-        ? `:${event.occurrenceDate}`
-        : '';
+      const movedFrom =
+        event.occurrenceMoves?.[event.occurrenceDate] ||
+        event.occurrenceOverrides?.[event.occurrenceDate]
+          ? `:${event.occurrenceDate}`
+          : '';
       const key = `${event.id}:${event.startsAt}:${minutes}${movedFrom}`;
       const action = actions[key];
       if (action?.dismissed) return [];

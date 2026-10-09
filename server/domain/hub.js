@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { repeatOptions, validDay, onDay } from '../../shared/calendar.js';
+import { repeatOptions, validDay, onDay, assignedMemberIds } from '../../shared/calendar.js';
 import { maxReminderMinutes } from '../../shared/reminders.js';
 
 export class ValidationError extends Error {}
@@ -22,12 +22,18 @@ export function createHub(repository) {
       checkKind(kind);
       return repository.list(kind);
     },
-    async save(kind, input, id) {
+    async save(kind, input, id, restoring = false) {
       checkKind(kind);
       if (!input || typeof input !== 'object' || Array.isArray(input))
         throw new ValidationError('Provide an item object.');
+      if (restoring && !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(id || '')) {
+        throw new ValidationError('Choose a valid event ID to restore.');
+      }
       const existing = id ? await repository.get(kind, id) : null;
-      if (id && !existing) throw new NotFoundError('Item no longer exists.');
+      if (restoring && (kind !== 'events' || existing)) {
+        throw new ValidationError('This event cannot be restored over an existing item.');
+      }
+      if (id && !existing && !restoring) throw new NotFoundError('Item no longer exists.');
       const item = {
         id: id || randomUUID(),
         title: text(input.title, 'Title', 160),
@@ -68,8 +74,61 @@ export function createHub(repository) {
           item.location = location.trim();
         }
         item.startsAt = new Date(input.startsAt).toISOString();
+        item.allDay = input.allDay ?? false;
+        if (typeof item.allDay !== 'boolean') throw new ValidationError('Invalid all-day setting.');
+        if (
+          input.endsAt &&
+          (typeof input.endsAt !== 'string' || !Number.isFinite(Date.parse(input.endsAt)))
+        ) {
+          throw new ValidationError('Choose a valid end date and time.');
+        }
+        item.endsAt = input.endsAt ? new Date(input.endsAt).toISOString() : null;
+        if (item.allDay) {
+          const start = new Date(item.startsAt);
+          const end = new Date(item.endsAt || item.startsAt);
+          start.setHours(0, 0, 0, 0);
+          end.setHours(23, 59, 59, 999);
+          item.startsAt = start.toISOString();
+          item.endsAt = end.toISOString();
+        }
+        if (
+          item.endsAt &&
+          (Date.parse(item.endsAt) <= Date.parse(item.startsAt) ||
+            Date.parse(item.endsAt) - Date.parse(item.startsAt) > 366 * 86400000)
+        ) {
+          throw new ValidationError('End must follow start and be within 366 days.');
+        }
         item.done = input.done;
-        item.memberId = input.memberId || null;
+        if (input.memberId != null && typeof input.memberId !== 'string') {
+          throw new ValidationError('Choose an existing family member.');
+        }
+        if (input.memberId && !(await repository.get('members', input.memberId))) {
+          throw new ValidationError('Choose an existing family member.');
+        }
+        // Older clients may edit only memberId on a previously returned record.
+        const legacyChange =
+          existing &&
+          input.memberId !== existing.memberId &&
+          JSON.stringify(input.memberIds) === JSON.stringify(existing.memberIds);
+        const memberIds = legacyChange
+          ? input.memberId
+            ? [input.memberId]
+            : []
+          : (input.memberIds ?? (input.memberId ? [input.memberId] : []));
+        if (
+          !Array.isArray(memberIds) ||
+          memberIds.length > 100 ||
+          memberIds.some((id) => typeof id !== 'string' || !id)
+        ) {
+          throw new ValidationError('Choose existing family members.');
+        }
+        item.memberIds = [...new Set(memberIds)];
+        item.memberId = item.memberIds.length === 1 ? item.memberIds[0] : null;
+        for (const memberId of item.memberIds) {
+          if (!(await repository.get('members', memberId))) {
+            throw new ValidationError('Choose an existing family member.');
+          }
+        }
         // Missing fields on legacy plans mean no alert until explicitly enabled.
         item.reminderMinutes = input.reminderMinutes === undefined ? null : input.reminderMinutes;
         if (
@@ -117,6 +176,60 @@ export function createHub(repository) {
         }
         item.completedDates = input.completedDates ?? [];
         item.occurrenceMoves = input.occurrenceMoves ?? {};
+        item.excludedDates = input.excludedDates ?? [];
+        if (
+          !Array.isArray(item.excludedDates) ||
+          item.excludedDates.length > 10000 ||
+          item.excludedDates.some((day) => !validDay(day))
+        ) {
+          throw new ValidationError('Invalid excluded occurrence dates.');
+        }
+        item.occurrenceOverrides = input.occurrenceOverrides ?? {};
+        if (
+          !item.occurrenceOverrides ||
+          typeof item.occurrenceOverrides !== 'object' ||
+          Array.isArray(item.occurrenceOverrides) ||
+          Object.keys(item.occurrenceOverrides).length > 1000
+        ) {
+          throw new ValidationError('Invalid occurrence edits.');
+        }
+        // Reuse the same event validation without writing nested items to storage.
+        const overrides = {};
+        for (const [day, patch] of Object.entries(item.occurrenceOverrides)) {
+          if (!validDay(day) || !patch || typeof patch !== 'object' || Array.isArray(patch)) {
+            throw new ValidationError('Invalid occurrence edit.');
+          }
+          const validator = createHub({ ...repository, save: async () => {} });
+          const checked = await validator.save('events', {
+            ...input,
+            ...patch,
+            memberIds:
+              patch.memberIds ??
+              (Object.hasOwn(patch, 'memberId')
+                ? patch.memberId
+                  ? [patch.memberId]
+                  : []
+                : item.memberIds),
+            repeat: 'none',
+            occurrenceOverrides: {},
+            occurrenceMoves: {},
+            excludedDates: [],
+          });
+          overrides[day] = Object.fromEntries(
+            [
+              'title',
+              'type',
+              'startsAt',
+              'endsAt',
+              'allDay',
+              'location',
+              'memberId',
+              'memberIds',
+              'reminderMinutes',
+            ].map((key) => [key, checked[key]]),
+          );
+        }
+        item.occurrenceOverrides = overrides;
         if (
           !item.occurrenceMoves ||
           typeof item.occurrenceMoves !== 'object' ||
@@ -145,14 +258,23 @@ export function createHub(repository) {
           throw new ValidationError('Invalid completed occurrence dates.');
         }
       }
-      await repository.save(kind, item);
+      if (restoring) await repository.restore(kind, item);
+      else await repository.save(kind, item);
       return item;
     },
     async remove(kind, id) {
       checkKind(kind);
       if (kind === 'members') {
         const events = await repository.list('events');
-        if (events.some((event) => event.memberId === id)) {
+        if (
+          events.some(
+            (event) =>
+              assignedMemberIds(event).includes(id) ||
+              Object.values(event.occurrenceOverrides || {}).some((patch) =>
+                assignedMemberIds(patch).includes(id),
+              ),
+          )
+        ) {
           throw new ValidationError(
             'Reassign this member’s calendar entries before deleting them.',
           );

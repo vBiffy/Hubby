@@ -24,6 +24,9 @@ test('calendar, editor and reminder popup render without crashing', async () => 
     const populated = renderToStaticMarkup(React.createElement(Calendar, { ...props, items }));
     assert.match(populated, /Edit event: Meeting 0/);
     assert.match(populated, /\+1 more/);
+    assert.match(populated, /aria-label="Calendar view: month"/);
+    assert.match(populated, /aria-haspopup="menu"/);
+    assert.match(populated, /Whole household/);
 
     const { ReminderCenter } = await vite.ssrLoadModule('/src/components/ReminderCenter.jsx');
     const popup = renderToStaticMarkup(
@@ -55,6 +58,27 @@ test('calendar, editor and reminder popup render without crashing', async () => 
     );
     assert.match(editor, /When should we remind you/);
     assert.match(editor, /15 minutes before/);
+    const allDayEditor = renderToStaticMarkup(
+      React.createElement(EventEditor, {
+        draft: {
+          ...items[0],
+          startsAt: '2026-10-08T00:00',
+          allDay: true,
+          endsAt: '2026-10-09T23:59',
+          repeat: 'weekly',
+        },
+        occurrenceOnly: true,
+        conflicts: [{ title: 'Other meeting' }],
+        onChange() {},
+        onSubmit() {},
+        onCancel() {},
+        weekStart: 0,
+      }),
+    );
+    assert.doesNotMatch(allDayEditor, /TIME/);
+    assert.match(allDayEditor, /Saving changes only this occurrence/);
+    assert.match(allDayEditor, /Overlaps with: Other meeting/);
+    assert.doesNotMatch(allDayEditor, /Repeat through/);
     const { EventDetails } = await vite.ssrLoadModule('/src/components/EventDetails.jsx');
     const detailProps = { members: [], onEdit() {}, onDelete() {}, onClose() {} };
     const details = renderToStaticMarkup(
@@ -66,6 +90,15 @@ test('calendar, editor and reminder popup render without crashing', async () => 
     assert.match(details, /Community center/);
     assert.match(details, /Edit Event/);
     assert.match(details, /Delete Event/);
+    const recurringDetails = renderToStaticMarkup(
+      React.createElement(EventDetails, {
+        ...detailProps,
+        item: { ...items[0], repeat: 'weekly' },
+        onScope() {},
+      }),
+    );
+    assert.match(recurringDetails, /Only this occurrence/);
+    assert.match(recurringDetails, /Entire series/);
     const reminderDetails = renderToStaticMarkup(
       React.createElement(EventDetails, {
         ...detailProps,

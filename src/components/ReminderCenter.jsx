@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { eventStyle } from '../../shared/calendar.js';
+import { planStyle, planMemberLabel, assignedMemberIds } from '../../shared/calendar.js';
 import { snoozeOptions } from '../../shared/reminders.js';
 
 // Non-modal popup: other plans remain usable while multiple reminders queue.
@@ -48,7 +48,6 @@ export function ReminderCenter({ reminders, now, members, onSnooze, onDismiss, s
       )}
       <div className="reminder-list">
         {reminders.map((reminder) => {
-          const member = members.find((person) => person.id === reminder.memberId);
           const startsAt = new Date(reminder.startsAt);
           const difference = Math.round((startsAt.getTime() - now) / 60000);
           const relative =
@@ -59,9 +58,14 @@ export function ReminderCenter({ reminders, now, members, onSnooze, onDismiss, s
                 : `Started ${Math.abs(difference)} min ago`;
           return (
             <article key={reminder.reminderKey} className="reminder-item">
-              <span className="reminder-type" style={eventStyle(member)}>
-                {reminder.type === 'reminder' ? 'Reminder' : 'Event'} ·{' '}
-                {member?.title || 'Household'}
+              <span
+                className={`reminder-type ${assignedMemberIds(reminder).length > 1 ? 'shared-event' : ''}`}
+                style={planStyle(reminder, members)}
+              >
+                <span className="calendar-event-label">
+                  {reminder.type === 'reminder' ? 'Reminder' : 'Event'} ·{' '}
+                  {planMemberLabel(reminder, members)}
+                </span>
               </span>
               <h3>{reminder.title}</h3>
               <p>
