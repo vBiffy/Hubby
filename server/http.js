@@ -1,0 +1,53 @@
+import express from 'express';
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { ValidationError, NotFoundError } from './domain/hub.js';
+import { WeatherUnavailableError } from './domain/weather.js';
+
+function errorStatus(error) {
+  if (error instanceof WeatherUnavailableError) return 503;
+  if (error.type === 'entity.too.large') return 413;
+  if (error instanceof ValidationError || error.type === 'entity.parse.failed') return 400;
+  if (error instanceof NotFoundError) return 404;
+
+  return 500;
+}
+
+// Inbound adapter: translate HTTP requests into application use cases.
+export function createApp(hub, storage, health = async () => {}, weather) {
+  const app = express();
+  app.disable('x-powered-by');
+  app.use(express.json({ limit: '64kb' }));
+  app.get('/api/health', async (req, res) => {
+    await health();
+    res.json({ status: 'ok', storage });
+  });
+  // Register before /:kind: weather is an integration, not a stored record.
+  app.get('/api/weather', async (req, res) => {
+    if (!weather) throw new WeatherUnavailableError('Weather is not configured.');
+    res.set('Cache-Control', 'no-store').json(await weather.today());
+  });
+  app.get('/api/:kind', async (req, res) => res.json(await hub.list(req.params.kind)));
+  app.post('/api/:kind', async (req, res) =>
+    res.status(201).json(await hub.save(req.params.kind, req.body)),
+  );
+  app.put('/api/:kind/:id', async (req, res) =>
+    res.json(await hub.save(req.params.kind, req.body, req.params.id)),
+  );
+  app.delete('/api/:kind/:id', async (req, res) => {
+    await hub.remove(req.params.kind, req.params.id);
+    res.sendStatus(204);
+  });
+  app.use('/api', (req, res) => res.status(404).json({ error: 'Unknown API endpoint.' }));
+  // A production build is served by the API, so a Pi needs only one process.
+  const dist = resolve('dist');
+  if (existsSync(dist)) app.use(express.static(dist));
+  app.use((error, req, res, next) => {
+    const status = errorStatus(error);
+    if (status === 500) console.error(error);
+    res
+      .status(status)
+      .json({ error: status === 500 ? 'Storage unavailable. Please try again.' : error.message });
+  });
+  return app;
+}
