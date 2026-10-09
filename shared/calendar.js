@@ -21,6 +21,41 @@ export function toHour24(hour, period) {
   return (hour % 12) + (period === 'PM' ? 12 : 0);
 }
 
+export function validDay(value) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T12:00:00`);
+  return Number.isFinite(date.getTime()) && dateKey(date) === value;
+}
+
+export function onDay(startsAt, day) {
+  if (!validDay(day)) throw new Error('Choose a valid calendar day.');
+  const original = new Date(startsAt);
+  const date = new Date(`${day}T12:00:00`);
+  date.setHours(
+    original.getHours(),
+    original.getMinutes(),
+    original.getSeconds(),
+    original.getMilliseconds(),
+  );
+  // Some wall times do not exist during the spring daylight-saving transition.
+  if (date.getHours() !== original.getHours() || date.getMinutes() !== original.getMinutes()) {
+    throw new Error('That time does not exist on this day due to daylight saving.');
+  }
+  return date.toISOString();
+}
+
+export function moveOccurrence(series, occurrence, day) {
+  if (!series) throw new Error('This plan no longer exists.');
+  if (!series.repeat || series.repeat === 'none') {
+    return { ...series, startsAt: onDay(series.startsAt, day) };
+  }
+  const originalDay = occurrence.occurrenceDate;
+  const occurrenceMoves = { ...series.occurrenceMoves };
+  if (day === originalDay) delete occurrenceMoves[originalDay];
+  else occurrenceMoves[originalDay] = day;
+  return { ...series, occurrenceMoves };
+}
+
 export function eventStyle(member) {
   if (!member) return undefined;
   const channels = member.color
@@ -61,6 +96,19 @@ export function occurrences(items, from, through) {
       if (start >= from && start <= through) result.push({ ...item, occurrenceKey: item.id });
       continue;
     }
+    // Generate moved entries independently: their original dates may be outside
+    // the visible range. Keep original identity for completion and future moves.
+    for (const [originalDay, targetDay] of Object.entries(item.occurrenceMoves || {})) {
+      const moved = new Date(onDay(start, targetDay));
+      if (moved < from || moved > through) continue;
+      result.push({
+        ...item,
+        startsAt: moved.toISOString(),
+        occurrenceDate: originalDay,
+        occurrenceKey: `${item.id}:${originalDay}`,
+        done: (item.completedDates || []).includes(originalDay),
+      });
+    }
     // Jump near the requested range so older series do not require an unbounded scan.
     const elapsedDays = (from - start) / 86400000;
     let index = 0;
@@ -84,6 +132,7 @@ export function occurrences(items, from, through) {
       if (date < from) continue;
       // Start date is a lower bound; emit only the chosen weekdays from then on.
       if (repeat === 'custom' && !(item.repeatDays || []).includes(date.getDay())) continue;
+      if (item.occurrenceMoves?.[key]) continue;
       result.push({
         ...item,
         startsAt: date.toISOString(),

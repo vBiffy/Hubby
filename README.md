@@ -46,6 +46,34 @@ This starter has no authentication and binds to localhost by default. Add authen
 
 ## Development and customization
 
+### Popup reminders
+
+Calendar entries can be dragged to another day without changing their local time.
+On touchscreens, press and hold an entry before dragging. With a keyboard, focus
+an entry, press Space, then focus a destination date and press Enter; Escape cancels.
+For recurring plans, only the selected occurrence moves. Its original date is
+skipped and its completion state follows it; other occurrences keep their schedule.
+Moves can cross month boundaries and the original series end date. Reminder alerts
+follow the new date. This update requires no database migration.
+
+When adding or editing either an event or reminder, choose **When should we remind
+you?**: at the scheduled time, a preset lead time, a custom number of minutes (up
+to seven days), or no popup. New plans default to 15 minutes before; existing plans
+stay silent until you enable reminders for them.
+
+A popup appears on any app tab when an alert becomes due, with **Snooze** (5, 10,
+15, 30, or 60 minutes) and **Dismiss**. Multiple alerts appear together. Dismiss
+silences only that occurrence and does not mark the plan complete. Snoozes and
+dismissals are saved per browser/screen across reloads; another device has its own
+delivery state. Changing a plan's start or lead time schedules a fresh alert.
+
+Keep the app open for alerts. It checks every ten seconds and when the screen
+regains focus, catching up on alerts due in the last 24 hours. Closed apps and
+sleeping computers cannot display popups; browser background throttling can delay
+delivery until the app resumes. Popups wait until an open event editor is closed.
+This is an in-app framework; it does not send OS notifications or play sounds.
+No database migration is needed for the new event reminder setting.
+
 Calendar time entry uses a 12-hour clock with AM/PM. Under **Customize → Family
 members**, add/edit household members with a required unique six-digit hex color.
 Assign a member when adding or editing a calendar entry; its color and name appear
@@ -102,4 +130,4 @@ The Customize tab controls hub name, accent color, dark mode, larger text, week 
 
 See [architecture and React basics](docs/ARCHITECTURE.md) for the code layout, ports, adapters, and extension steps. Comments explain boundaries and non-obvious behavior. References: [React basics](https://react.dev/learn), [React with Vite](https://react.dev/learn/build-a-react-app-from-scratch), [parameterized PostgreSQL queries](https://node-postgres.com/features/queries).
 
-Current scope: calendar entries are timed, single occurrences; reminders are visual (no alarms), shared data refreshes every 30 seconds, writes need the API, and concurrent edits use last-write-wins. Recurrence, external calendar sync, accounts, and notifications are future extensions.
+Current scope: calendar entries support timed single occurrences and recurring series. In-app popup reminders require an open app. Shared data refreshes every 30 seconds, writes need the API, and concurrent edits use last-write-wins. External calendar sync, accounts, and OS notifications are future extensions.

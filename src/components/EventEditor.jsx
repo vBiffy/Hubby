@@ -1,5 +1,6 @@
 import { DateTimePicker } from './DateTimePicker.jsx';
 import { weekdays } from '../../shared/calendar.js';
+import { ReminderTiming } from './ReminderTiming.jsx';
 
 // The editor receives actions; it does not know about HTTP or storage.
 export function EventEditor({
@@ -7,6 +8,7 @@ export function EventEditor({
   onChange,
   onSubmit,
   onCancel,
+  onDelete,
   weekStart,
   busy,
   error,
@@ -48,6 +50,21 @@ export function EventEditor({
             value={draft.startsAt}
             weekStart={weekStart}
             onChange={(startsAt) => onChange({ ...draft, startsAt })}
+          />
+          {draft.type === 'event' && (
+            <label>
+              Location (optional)
+              <input
+                maxLength={300}
+                value={draft.location || ''}
+                placeholder="e.g. Office or community center"
+                onChange={(event) => onChange({ ...draft, location: event.target.value })}
+              />
+            </label>
+          )}
+          <ReminderTiming
+            value={draft.reminderMinutes ?? null}
+            onChange={(reminderMinutes) => onChange({ ...draft, reminderMinutes })}
           />
           <label>
             Family member
@@ -154,6 +171,11 @@ export function EventEditor({
             <button disabled={busy} type="button" onClick={onCancel}>
               Cancel
             </button>
+            {draft.id && onDelete && (
+              <button disabled={busy} type="button" className="delete-plan" onClick={onDelete}>
+                Delete {planType}
+              </button>
+            )}
           </div>
         </form>
       </section>

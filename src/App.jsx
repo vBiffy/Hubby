@@ -3,11 +3,16 @@ import { Groceries } from './components/Groceries.jsx';
 import { Agenda } from './components/Agenda.jsx';
 import { Notes } from './components/Notes.jsx';
 import { Calendar, dayKey } from './components/Calendar.jsx';
+import { EventDetails } from './components/EventDetails.jsx';
 import { EventEditor } from './components/EventEditor.jsx';
 import { Weather, WeatherSummary } from './components/Weather.jsx';
 import { useWeather } from './hooks/useWeather.js';
 import { FamilyMembers } from './components/FamilyMembers.jsx';
 import { Settings } from './components/Settings.jsx';
+import { ReminderCenter } from './components/ReminderCenter.jsx';
+import { useReminders } from './hooks/useReminders.js';
+import { ConfirmDialog } from './components/ConfirmDialog.jsx';
+import { moveOccurrence } from '../shared/calendar.js';
 
 const pageTitles = {
   calendar: 'A little planning goes a long way',
@@ -41,9 +46,13 @@ export function App({ repository }) {
   const [tab, setTab] = useState(location.hash.slice(1) || 'home');
   const [settings, setSettings] = useState(readSettings);
   const [data, setData] = useState({ notes: [], events: [], groceries: [], members: [] });
+  const reminderProps = useReminders(data.events);
   const [status, setStatus] = useState('Connecting…');
   const [error, setError] = useState('');
   const [draft, setDraft] = useState(null);
+  const [details, setDetails] = useState(null);
+  const selectedPlan = draft || details;
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [busy, setBusy] = useState(false);
   const [clock, setClock] = useState(new Date());
   useEffect(() => {
@@ -107,7 +116,35 @@ export function App({ repository }) {
     await repository.remove(kind, id);
     setData((previous) => ({ ...previous, [kind]: previous[kind].filter((x) => x.id !== id) }));
   }
+  async function moveEvent(occurrence, day) {
+    const series = data.events.find((event) => event.id === occurrence.id);
+    await save('events', moveOccurrence(series, occurrence, day));
+  }
+  async function deletePlan() {
+    setBusy(true);
+    try {
+      await remove('events', selectedPlan.id);
+      setConfirmDelete(false);
+      setDetails(null);
+      setDraft(null);
+      setError('');
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  function showEvent(item) {
+    setError('');
+    if (!item) {
+      editEvent(null);
+      return;
+    }
+    setDetails(item);
+  }
   function editEvent(item, day = dayKey(new Date())) {
+    setDetails(null);
+    setError('');
     // datetime-local represents local wall time. Convert to ISO only on save,
     // and back to local wall time on edit to avoid timezone shifts.
     // Clicking a repeated occurrence opens its source series, not a copied event.
@@ -130,6 +167,7 @@ export function App({ repository }) {
             repeat: 'none',
             repeatUntil: '',
             memberId: null,
+            reminderMinutes: 15,
           },
     );
   }
@@ -158,7 +196,7 @@ export function App({ repository }) {
   };
   const agendaProps = {
     items: data.events,
-    onEdit: editEvent,
+    onEdit: showEvent,
     members: data.members,
     onSave: (item) => {
       const series = data.events.find((event) => event.id === item.id);
@@ -244,7 +282,8 @@ export function App({ repository }) {
                 members={data.members}
                 weekStart={Number(settings.weekStart)}
                 onSelect={(day) => editEvent(null, day)}
-                onEdit={editEvent}
+                onEdit={showEvent}
+                onMove={moveEvent}
               />
               <div className="widgets">
                 {settings.agenda && <Agenda {...agendaProps} compact />}
@@ -268,7 +307,8 @@ export function App({ repository }) {
               members={data.members}
               weekStart={Number(settings.weekStart)}
               onSelect={(day) => editEvent(null, day)}
-              onEdit={editEvent}
+              onEdit={showEvent}
+              onMove={moveEvent}
             />
             <Agenda {...agendaProps} />
           </>
@@ -302,6 +342,20 @@ export function App({ repository }) {
             View not found. <a href="#home">Go home</a>
           </p>
         )}
+        {details && (
+          <EventDetails
+            item={details}
+            members={data.members}
+            busy={busy}
+            error={error}
+            onEdit={() => editEvent(details)}
+            onClose={() => setDetails(null)}
+            onDelete={() => {
+              setError('');
+              setConfirmDelete(true);
+            }}
+          />
+        )}
         {draft && (
           <EventEditor
             members={data.members}
@@ -309,12 +363,33 @@ export function App({ repository }) {
             onChange={setDraft}
             onSubmit={submitEvent}
             onCancel={() => setDraft(null)}
+            onDelete={() => {
+              setError('');
+              setConfirmDelete(true);
+            }}
             weekStart={Number(settings.weekStart)}
             busy={busy}
             error={error}
           />
         )}
+        {confirmDelete && selectedPlan && (
+          <ConfirmDialog
+            title={`Delete ${selectedPlan.type === 'reminder' ? 'Reminder' : 'Event'}?`}
+            message={`Remove '${selectedPlan.title}'? ${
+              selectedPlan.repeat && selectedPlan.repeat !== 'none'
+                ? 'This will delete the entire recurring series and all its occurrences.'
+                : `This will remove this ${selectedPlan.type === 'reminder' ? 'reminder' : 'event'} from your calendar.`
+            } This cannot be undone.`}
+            confirmLabel="Delete"
+            cancelLabel="Keep it"
+            busy={busy}
+            error={error}
+            onConfirm={deletePlan}
+            onCancel={() => setConfirmDelete(false)}
+          />
+        )}
       </main>
+      {!draft && !details && <ReminderCenter {...reminderProps} members={data.members} />}
     </div>
   );
 }

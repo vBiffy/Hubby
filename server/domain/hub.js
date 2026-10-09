@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { repeatOptions } from '../../shared/calendar.js';
+import { repeatOptions, validDay, onDay } from '../../shared/calendar.js';
+import { maxReminderMinutes } from '../../shared/reminders.js';
 
 export class ValidationError extends Error {}
 export class NotFoundError extends Error {}
@@ -59,9 +60,26 @@ export function createHub(repository) {
           throw new ValidationError('Choose a valid date and time.');
         if (typeof input.done !== 'boolean') throw new ValidationError('Done must be a boolean.');
         item.type = input.type;
+        if (item.type === 'event') {
+          const location = input.location ?? '';
+          if (typeof location !== 'string' || location.length > 300) {
+            throw new ValidationError('Location must be at most 300 characters.');
+          }
+          item.location = location.trim();
+        }
         item.startsAt = new Date(input.startsAt).toISOString();
         item.done = input.done;
         item.memberId = input.memberId || null;
+        // Missing fields on legacy plans mean no alert until explicitly enabled.
+        item.reminderMinutes = input.reminderMinutes === undefined ? null : input.reminderMinutes;
+        if (
+          item.reminderMinutes !== null &&
+          (!Number.isInteger(item.reminderMinutes) ||
+            item.reminderMinutes < 0 ||
+            item.reminderMinutes > maxReminderMinutes)
+        ) {
+          throw new ValidationError('Reminder lead time must be 0–10080 minutes, or disabled.');
+        }
         if (item.memberId !== null && typeof item.memberId !== 'string') {
           throw new ValidationError('Choose an existing family member.');
         }
@@ -98,6 +116,25 @@ export function createHub(repository) {
           }
         }
         item.completedDates = input.completedDates ?? [];
+        item.occurrenceMoves = input.occurrenceMoves ?? {};
+        if (
+          !item.occurrenceMoves ||
+          typeof item.occurrenceMoves !== 'object' ||
+          Array.isArray(item.occurrenceMoves) ||
+          Object.keys(item.occurrenceMoves).length > 10000 ||
+          Object.entries(item.occurrenceMoves).some(
+            ([original, target]) => !validDay(original) || !validDay(target),
+          )
+        ) {
+          throw new ValidationError('Invalid moved occurrence dates.');
+        }
+        for (const target of Object.values(item.occurrenceMoves)) {
+          try {
+            onDay(item.startsAt, target);
+          } catch (error) {
+            throw new ValidationError(error.message);
+          }
+        }
         if (
           !Array.isArray(item.completedDates) ||
           item.completedDates.length > 10000 ||
