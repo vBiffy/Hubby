@@ -1,3 +1,4 @@
+import { Select } from './Select.jsx';
 import { useEffect, useId, useRef } from 'react';
 import { weekdays, planStyle, planMemberLabel, assignedMemberIds } from '../../shared/calendar.js';
 
@@ -47,12 +48,21 @@ export function EventDetails({
       <p className="eyebrow">{type.toUpperCase()} DETAILS</p>
       <h2 id={`${id}-title`}>{item.title}</h2>
       <span
-        className={`reminder-type ${assignedMemberIds(item).length > 1 ? 'shared-event' : ''}`}
+        className={`reminder-type ${assignedMemberIds(item).length > 1 || item.sportsColors?.length > 1 ? 'shared-event' : ''}`}
         style={planStyle(item, members)}
       >
         <span className="calendar-event-label">{planMemberLabel(item, members)}</span>
       </span>
       <dl className="event-summary">
+        {item.sportsSource && (
+          <div>
+            <dt>Sports schedule</dt>
+            <dd>
+              Synced from ESPN · {item.sportsStatus}
+              {item.sportsTimeTbd && ' · Start time TBD'}
+            </dd>
+          </div>
+        )}
         <div>
           <dt>When</dt>
           <dd>
@@ -93,13 +103,19 @@ export function EventDetails({
           <dd>{item.done ? 'Completed' : 'Planned'}</dd>
         </div>
       </dl>
+      {item.sportsSource && (
+        <p className="hint">
+          This game updates from ESPN automatically. Manage its calendar visibility through favorite
+          teams in Customize → Sports.
+        </p>
+      )}
       {repeat !== 'none' && onScope && (
         <label>
           Apply edit or delete to
-          <select value={scope} onChange={(event) => onScope(event.target.value)}>
+          <Select value={scope} onChange={(event) => onScope(event.target.value)}>
             <option value="occurrence">Only this occurrence</option>
             <option value="series">Entire series</option>
-          </select>
+          </Select>
         </label>
       )}
       {item.allDay && <p>All-day plan</p>}
@@ -118,15 +134,19 @@ export function EventDetails({
         </p>
       )}
       <div className="actions">
-        <button className="primary" disabled={busy} onClick={onEdit}>
-          Edit {type}
-        </button>
+        {!item.sportsSource && (
+          <button className="primary" disabled={busy} onClick={onEdit}>
+            Edit {type}
+          </button>
+        )}
         <button disabled={busy} onClick={onClose}>
           Close
         </button>
-        <button className="delete-plan" disabled={busy} onClick={onDelete}>
-          Delete {type}
-        </button>
+        {!item.sportsSource && (
+          <button className="delete-plan" disabled={busy} onClick={onDelete}>
+            Delete {type}
+          </button>
+        )}
       </div>
     </dialog>
   );

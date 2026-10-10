@@ -118,6 +118,8 @@ nav a {
   display: flex;
   align-items: center;
   gap: 12px;
+  text-align: left;
+  justify-content: flex-start;
 }
 nav a.active {
   background: var(--accent);
@@ -125,6 +127,9 @@ nav a.active {
 }
 nav a span {
   font-size: 23px;
+  width: 26px;
+  flex: 0 0 26px;
+  text-align: center;
 }
 .sidebar-bottom {
   margin-top: auto;
@@ -460,7 +465,7 @@ input[type='color'] {
   main {
     max-width: 1600px;
     width: 100%;
-    margin: auto;
+    margin: 0 auto;
   }
 }
 @media (max-width: 1100px) {
@@ -1389,4 +1394,571 @@ input[type='color'] {
 
 .weather-hour > strong {
   font-size: 24px;
+}
+.sports-leagues {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  flex-shrink: 0;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.sports-leagues button {
+  border-radius: 24px;
+  white-space: nowrap;
+}
+
+.sports-leagues button[aria-pressed='true'] {
+  background: var(--accent);
+  color: white;
+}
+
+.sports-games {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.sports-game {
+  background: var(--background);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 18px;
+}
+
+.favorite-game {
+  border-left: 4px solid var(--accent);
+}
+
+.sports-game-heading,
+.sports-team {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.sports-game-heading {
+  margin-bottom: 16px;
+  font-size: 12px;
+}
+
+.sports-game-heading .hint {
+  margin: 0;
+}
+
+.sports-team {
+  margin: 12px 0;
+}
+
+.sports-team-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sports-team-name .ap-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 0;
+  line-height: 1;
+  min-height: 24px;
+}
+
+.sports-spread {
+  flex-shrink: 0;
+  color: var(--subtle);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.sports-team small,
+.sports-game-meta {
+  display: block;
+  color: var(--subtle);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.sports-team > strong {
+  font-size: 26px;
+}
+
+.sports-winner,
+.sports-live {
+  font-weight: 700;
+}
+
+.sports-favorite {
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 4px 8px;
+}
+
+.sports-settings {
+  margin-top: 24px;
+}
+
+.sports-team-picker {
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.sports-team-picker .check {
+  padding: 8px;
+  margin: 0;
+  border-bottom: 1px solid var(--line);
+}
+
+/* Keep the sports header and day controls fixed; only game results scroll vertically. */
+.app:has(.sports-panel) {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app:has(.sports-panel) > aside {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.app:has(.sports-panel) > main {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app:has(.sports-panel) > main > header {
+  flex-shrink: 0;
+}
+
+.sports-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sports-panel > :not(.sports-results) {
+  flex-shrink: 0;
+}
+
+.sports-results {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  padding: 0 8px 12px 2px;
+  scrollbar-width: thin;
+}
+
+.sports-day-picker {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 2px 12px;
+}
+
+.sports-day-picker button {
+  white-space: nowrap;
+  border-radius: 14px;
+}
+
+.sports-day-picker button[aria-pressed='true'],
+.customize-tabs button[aria-selected='true'] {
+  background: var(--accent);
+  color: white;
+}
+
+.customize-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.customize-tabs button {
+  border-radius: 20px;
+  min-width: 90px;
+}
+
+.customize .sports-settings,
+.customize .family-members {
+  margin-top: 0;
+}
+
+@media (max-width: 650px) {
+  .app:has(.sports-panel) {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .sports-panel > .hint {
+    font-size: 11px;
+    margin: 6px 0;
+  }
+
+  .sports-panel .panel-heading {
+    margin-bottom: 12px;
+  }
+}
+.sports-favorite-row {
+  border-bottom: 1px solid var(--line);
+  padding: 4px 0;
+}
+
+.sports-favorite-row .check {
+  border-bottom: 0;
+}
+
+.sports-favorite-row .sports-calendar-toggle {
+  padding-left: 38px;
+  font-size: 12px;
+  color: var(--subtle);
+}
+.hub-overview {
+  display: grid;
+  gap: 16px;
+}
+
+.app:has(.hub-overview) > main {
+  align-self: start;
+  margin-top: 0;
+  margin-bottom: 0;
+  max-width: 1360px;
+}
+
+.hub-overview .hub-week {
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  border-color: transparent;
+}
+
+.hub-overview .panel {
+  padding: 20px;
+  min-width: 0;
+}
+
+.hub-overview .panel-heading {
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+.hub-overview h2 {
+  font-size: 20px;
+}
+
+.hub-overview .panel-heading a {
+  font-size: 13px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.hub-day-strip {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.hub-day-strip button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 4px;
+  border-radius: 16px;
+  background: var(--background);
+}
+
+.hub-day-strip button > span:first-child {
+  font-size: 12px;
+}
+
+.hub-day-strip strong {
+  font-size: 22px;
+}
+
+.hub-day-strip button[aria-pressed='true'] {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+  background: var(--surface);
+}
+
+.hub-day-dots {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-height: 12px;
+}
+
+.hub-day-dots i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--accent);
+}
+
+.hub-day-dots small {
+  font-size: 9px;
+}
+
+.hub-cards {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 16px;
+}
+
+.hub-plans {
+  min-height: 300px;
+}
+
+.hub-day-summary {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--subtle);
+}
+
+.hub-plan-list {
+  max-height: 340px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.hub-plan-list:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.hub-overview .hub-notes {
+  background: color-mix(in srgb, #d4b978 10%, var(--surface));
+}
+
+.hub-side-cards {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.hub-plan {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 12px 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+}
+
+.hub-plan:last-child {
+  border-bottom: 0;
+}
+
+.hub-plan-color {
+  flex: 0 0 8px;
+  height: 36px;
+  border-radius: 4px;
+  background-color: var(--accent);
+}
+
+.hub-plan > span:last-child {
+  min-width: 0;
+}
+
+.hub-plan strong,
+.hub-note-preview strong,
+.hub-note-preview small {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.hub-plan small,
+.hub-note-preview small {
+  display: block;
+  color: var(--subtle);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.hub-note-preview {
+  display: block;
+  text-decoration: none;
+  padding: 8px 0;
+  min-height: 44px;
+}
+
+.hub-note-preview small {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+}
+
+.hub-overview .empty {
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+/* Month cells stay predictable; tapping overflow opens the full day view. */
+.calendar-month .day {
+  height: 196px;
+  min-height: 196px;
+  overflow: hidden;
+}
+
+.calendar-month .calendar-event-label {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-height: 750px) and (min-width: 651px) {
+  .app:has(.hub-overview) main {
+    padding-top: 18px;
+    padding-bottom: 18px;
+  }
+
+  .app:has(.hub-overview) header {
+    margin-bottom: 14px;
+  }
+
+  .hub-overview .panel {
+    padding: 14px;
+  }
+
+  .hub-overview,
+  .hub-side-cards,
+  .hub-cards {
+    gap: 12px;
+  }
+}
+
+@media (max-width: 650px) {
+  .hub-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .hub-day-strip {
+    gap: 4px;
+  }
+}
+.sports-view-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.sports-view-toggle button[aria-pressed='true'] {
+  background: var(--accent);
+  color: white;
+}
+
+.ap-rank {
+  display: inline-block;
+  padding: 3px 6px;
+  margin-right: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.ap-rankings {
+  list-style: none;
+  padding: 0;
+}
+
+.ap-rankings li {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-height: 56px;
+  padding: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.ap-rankings strong {
+  flex: 1;
+}
+
+.ap-rankings small {
+  color: var(--subtle);
+}
+
+.ap-favorite {
+  background: var(--background);
+  border-left: 3px solid var(--accent);
+}
+
+/* Shared controls use theme variables, including in dark mode and desktop webviews. */
+.shared-select {
+  position: relative;
+  width: 100%;
+}
+.shared-select > button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  min-height: 46px;
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+}
+.shared-select-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 100%;
+  z-index: 100;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: 0 12px 32px #0002;
+}
+.shared-select-menu button {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  text-align: left;
+  border: 0;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+.shared-select-menu button[aria-selected='true'],
+.shared-select-menu button:hover {
+  background: color-mix(in srgb, var(--accent) 15%, var(--surface));
+}
+.setup-shell {
+  display: block;
+  min-height: 100dvh;
+  padding: 24px;
+}
+.family-setup {
+  width: min(100%, 700px);
+  margin: 0 auto;
+  padding: 24px;
+}
+.family-setup .family-members {
+  margin: 24px 0;
 }

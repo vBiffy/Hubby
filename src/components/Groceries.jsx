@@ -1,3 +1,4 @@
+import { DeleteButton } from './DeleteButton.jsx';
 import { useState } from 'react';
 
 const emptyItem = () => ({ title: '', quantity: '', done: false });
@@ -105,19 +106,14 @@ export function Groceries({ items, onSave, onDelete }) {
               >
                 Edit
               </button>
-              <button
+              <DeleteButton
+                title={item.title}
                 disabled={busy}
-                aria-label={`Delete ${item.title}`}
-                onClick={() => {
-                  if (window.confirm(`Remove “${item.title}” from the grocery list?`))
-                    act(async () => {
-                      await onDelete(item.id);
-                      if (draft.id === item.id) setDraft(emptyItem());
-                    });
+                onDelete={async () => {
+                  await onDelete(item.id);
+                  if (draft.id === item.id) setDraft(emptyItem());
                 }}
-              >
-                Delete
-              </button>
+              />
             </div>
           </li>
         ))}

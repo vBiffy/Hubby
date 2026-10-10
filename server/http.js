@@ -3,9 +3,11 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { ValidationError, NotFoundError } from './domain/hub.js';
 import { WeatherUnavailableError } from './domain/weather.js';
+import { SportsUnavailableError } from './domain/sports.js';
 
 function errorStatus(error) {
   if (error instanceof WeatherUnavailableError) return 503;
+  if (error instanceof SportsUnavailableError) return 503;
   if (error.type === 'entity.too.large') return 413;
   if (error instanceof ValidationError || error.type === 'entity.parse.failed') return 400;
   if (error instanceof NotFoundError) return 404;
@@ -14,7 +16,7 @@ function errorStatus(error) {
 }
 
 // Inbound adapter: translate HTTP requests into application use cases.
-export function createApp(hub, storage, health = async () => {}, weather) {
+export function createApp(hub, storage, health = async () => {}, weather, sports) {
   const app = express();
   app.disable('x-powered-by');
   app.use(express.json({ limit: '64kb' }));
@@ -26,6 +28,19 @@ export function createApp(hub, storage, health = async () => {}, weather) {
   app.get('/api/weather', async (req, res) => {
     if (!weather) throw new WeatherUnavailableError('Weather is not configured.');
     res.set('Cache-Control', 'no-store').json(await weather.today());
+  });
+  app.get('/api/sports/:league/:resource', async (req, res) => {
+    if (!sports) throw new SportsUnavailableError('Sports is not configured.');
+    const { league, resource } = req.params;
+    if (!['teams', 'games'].includes(resource))
+      throw new ValidationError('Unknown sports resource.');
+    const favorites =
+      typeof req.query.favorites === 'string' ? req.query.favorites.split(',').filter(Boolean) : [];
+    res
+      .set('Cache-Control', 'no-store')
+      .json(
+        resource === 'teams' ? await sports.teams(league) : await sports.games(league, favorites),
+      );
   });
   app.get('/api/:kind', async (req, res) => res.json(await hub.list(req.params.kind)));
   app.post('/api/events/:id/restore', async (req, res) =>

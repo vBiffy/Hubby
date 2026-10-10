@@ -1,9 +1,10 @@
+import { DeleteButton } from './DeleteButton.jsx';
 import { useState } from 'react';
 
 const emptyMember = () => ({ title: '', color: '' });
 
 // Family records are shared data, unlike the display preferences above them.
-export function FamilyMembers({ members, onSave, onDelete }) {
+export function FamilyMembers({ members, onSave, onDelete, allowDelete = true, disabled = false }) {
   const [draft, setDraft] = useState(emptyMember);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -70,11 +71,15 @@ export function FamilyMembers({ members, onSave, onDelete }) {
           </p>
         )}
         <div className="actions">
-          <button className="primary" disabled={busy || duplicate}>
+          <button className="primary" disabled={disabled || busy || duplicate}>
             {busy ? 'Saving…' : draft.id ? 'Save member' : '+ Add member'}
           </button>
           {draft.id && (
-            <button type="button" disabled={busy} onClick={() => setDraft(emptyMember())}>
+            <button
+              type="button"
+              disabled={disabled || busy}
+              onClick={() => setDraft(emptyMember())}
+            >
               Cancel
             </button>
           )}
@@ -93,21 +98,19 @@ export function FamilyMembers({ members, onSave, onDelete }) {
               {member.title}
             </span>
             <div className="actions">
-              <button disabled={busy} onClick={() => setDraft(member)}>
+              <button disabled={disabled || busy} onClick={() => setDraft(member)}>
                 Edit
               </button>
-              <button
-                disabled={busy}
-                onClick={() => {
-                  if (window.confirm(`Delete ${member.title}?`))
-                    act(async () => {
-                      await onDelete(member.id);
-                      if (draft.id === member.id) setDraft(emptyMember());
-                    });
-                }}
-              >
-                Delete
-              </button>
+              {allowDelete && (
+                <DeleteButton
+                  title={member.title}
+                  disabled={disabled || busy}
+                  onDelete={async () => {
+                    await onDelete(member.id);
+                    if (draft.id === member.id) setDraft(emptyMember());
+                  }}
+                />
+              )}
             </div>
           </li>
         ))}

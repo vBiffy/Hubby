@@ -51,7 +51,6 @@ export function Calendar({ items, weekStart, onSelect, onEdit, onMove, members =
     if (drag.current()) drop(day);
     else onSelect(day);
   }
-  const [expandedDays, setExpandedDays] = useState(new Set());
   const [view, setView] = useState('month');
   const [family, setFamily] = useState('all');
   const [month, setMonth] = useState(() => new Date());
@@ -92,7 +91,7 @@ export function Calendar({ items, weekStart, onSelect, onEdit, onMove, members =
 
   return (
     <section
-      className="panel calendar"
+      className={`panel calendar calendar-${view}`}
       onKeyDown={(event) => {
         if (event.key === 'Escape') {
           drag.end();
@@ -178,8 +177,7 @@ export function Calendar({ items, weekStart, onSelect, onEdit, onMove, members =
           const classes = ['day', isOutsideMonth ? 'muted' : '', isToday ? 'today' : ''];
           const key = dayKey(date);
           if (dropDay === key) classes.push('drop-target');
-          const isDayExpanded = expandedDays.has(key);
-          const visibleEvents = isDayExpanded || view !== 'month' ? events : events.slice(0, 2);
+          const visibleEvents = view !== 'month' ? events : events.slice(0, 2);
 
           return (
             <div
@@ -214,9 +212,13 @@ export function Calendar({ items, weekStart, onSelect, onEdit, onMove, members =
                 <button
                   type="button"
                   key={item.occurrenceKey}
-                  draggable={Boolean(onMove) && !moving}
+                  draggable={Boolean(onMove) && !moving && !item.sportsSource}
                   disabled={moving}
                   onDragStart={(event) => {
+                    if (item.sportsSource) {
+                      event.preventDefault();
+                      return;
+                    }
                     drag.start(item, true);
                     setDragged(item);
                     setMoveMessage('');
@@ -229,7 +231,8 @@ export function Calendar({ items, weekStart, onSelect, onEdit, onMove, members =
                     setDropDay(null);
                   }}
                   onPointerDown={(event) => {
-                    if (event.pointerType === 'mouse' || !onMove || moving) return;
+                    if (event.pointerType === 'mouse' || !onMove || moving || item.sportsSource)
+                      return;
                     const button = event.currentTarget;
                     touch.current.x = event.clientX;
                     touch.current.y = event.clientY;
@@ -278,7 +281,7 @@ export function Calendar({ items, weekStart, onSelect, onEdit, onMove, members =
                     setDropDay(null);
                   }}
                   onKeyDown={(event) => {
-                    if (event.key === ' ' && onMove) {
+                    if (event.key === ' ' && onMove && !item.sportsSource) {
                       event.preventDefault();
                       drag.start(item);
                       setDragged(item);
@@ -307,17 +310,19 @@ export function Calendar({ items, weekStart, onSelect, onEdit, onMove, members =
                   title={planMemberLabel(item, members)}
                   className={`calendar-event ${item.done ? 'completed' : ''} ${
                     view === 'day' ? 'day-event' : ''
-                  } ${assignedMemberIds(item).length > 1 ? 'shared-event' : ''}`}
+                  } ${assignedMemberIds(item).length > 1 || item.sportsColors?.length > 1 ? 'shared-event' : ''}`}
                 >
                   <span className="calendar-event-label">
                     {item.type === 'reminder' ? '• ' : ''}
-                    {item.allDay
-                      ? 'All day'
-                      : new Date(item.startsAt).toLocaleTimeString(undefined, {
-                          hour: 'numeric',
-                          minute: '2-digit',
-                          hour12: true,
-                        })}{' '}
+                    {item.sportsTimeTbd
+                      ? 'Time TBD'
+                      : item.allDay
+                        ? 'All day'
+                        : new Date(item.startsAt).toLocaleTimeString(undefined, {
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true,
+                          })}{' '}
                     {item.title}
                     {item.repeat && item.repeat !== 'none' ? ' (repeats)' : ''}
                     {view === 'day' && durationLabel(item) && (
@@ -330,17 +335,13 @@ export function Calendar({ items, weekStart, onSelect, onEdit, onMove, members =
                 <button
                   type="button"
                   className="day-more"
-                  aria-expanded={isDayExpanded}
-                  onClick={() =>
-                    setExpandedDays((previous) => {
-                      const next = new Set(previous);
-                      if (isDayExpanded) next.delete(key);
-                      else next.add(key);
-                      return next;
-                    })
-                  }
+                  aria-label={`View all ${events.length} plans on ${key}`}
+                  onClick={() => {
+                    setMonth(date);
+                    setView('day');
+                  }}
                 >
-                  {isDayExpanded ? 'Show less' : `+${events.length - 2} more`}
+                  {`+${events.length - 2} more`}
                 </button>
               )}
             </div>

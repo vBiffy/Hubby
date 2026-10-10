@@ -9,6 +9,20 @@ import { createServer } from 'vite';
 test('calendar, editor and reminder popup render without crashing', async () => {
   const vite = await createServer({ server: { middlewareMode: true, hmr: false } });
   try {
+    const { FamilySetup, demoMembers } = await vite.ssrLoadModule(
+      '/src/components/FamilySetup.jsx',
+    );
+    assert.equal(new Set(demoMembers.map((member) => member.color)).size, 3);
+    const setup = renderToStaticMarkup(
+      React.createElement(FamilySetup, {
+        members: [],
+        onSave() {},
+        onContinue() {},
+      }),
+    );
+    assert.match(setup, /Add Mom, Dad, and Kid for testing/);
+    assert.match(setup, /disabled=""[^>]*>Continue to kitchen/);
+    assert.doesNotMatch(setup, /<select/);
     const { Calendar } = await vite.ssrLoadModule('/src/components/Calendar.jsx');
     const props = { weekStart: 0, onSelect() {}, onEdit() {} };
     const empty = renderToStaticMarkup(React.createElement(Calendar, { ...props, items: [] }));
@@ -25,7 +39,7 @@ test('calendar, editor and reminder popup render without crashing', async () => 
     assert.match(populated, /Edit event: Meeting 0/);
     assert.match(populated, /\+1 more/);
     assert.match(populated, /aria-label="Calendar view: month"/);
-    assert.match(populated, /aria-haspopup="menu"/);
+    assert.match(populated, /aria-haspopup="listbox"/);
     assert.match(populated, /Whole household/);
 
     const { ReminderCenter } = await vite.ssrLoadModule('/src/components/ReminderCenter.jsx');
@@ -137,6 +151,92 @@ test('calendar, editor and reminder popup render without crashing', async () => 
     const summary = renderToStaticMarkup(React.createElement(WeatherSummary, { weather }));
     assert.doesNotMatch(summary, /The week ahead/);
     assert.match(summary, /60°F/);
+    const { Sports, Game } = await vite.ssrLoadModule('/src/components/Sports.jsx');
+    const gameCard = renderToStaticMarkup(
+      React.createElement(Game, {
+        favorites: [],
+        game: {
+          id: 'game',
+          startsAt: '2026-10-10T16:00Z',
+          state: 'pre',
+          teams: [
+            { id: '1', name: 'Indiana Hoosiers', homeAway: 'away', apRank: 7, spread: -7.5 },
+            { id: '2', name: 'Nebraska Cornhuskers', homeAway: 'home', spread: null },
+          ],
+        },
+      }),
+    );
+    assert.match(gameCard, /sports-team-name/);
+    assert.match(gameCard, /AP rank 7/);
+    assert.match(gameCard, /Favored by 7.5 points/);
+    assert.equal((gameCard.match(/sports-spread/g) || []).length, 1);
+    const { SportsFavorites } = await vite.ssrLoadModule('/src/components/SportsFavorites.jsx');
+    const sports = renderToStaticMarkup(React.createElement(Sports, { repository: {} }));
+    assert.match(sports, /FBS College Football/);
+    assert.match(sports, /English Premier League/);
+    assert.match(sports, /WNBA/);
+    assert.doesNotMatch(sports, />NBA</);
+    assert.doesNotMatch(sports, /MLB/);
+    const teams = renderToStaticMarkup(
+      React.createElement(SportsFavorites, { repository: {}, onChange() {} }),
+    );
+    assert.match(teams, /Your teams/);
+    assert.match(teams, /Find a team/);
+    const { Customize } = await vite.ssrLoadModule('/src/components/Customize.jsx');
+    const customize = renderToStaticMarkup(
+      React.createElement(Customize, {
+        settings: { name: 'Our kitchen', accent: '#264e42', weekStart: 0 },
+        members: [],
+        repository: {},
+        onChange() {},
+        onReset() {},
+        onSaveMember() {},
+        onDeleteMember() {},
+      }),
+    );
+    assert.match(customize, /role="tablist"/);
+    assert.match(customize, /Your hub, your way/);
+    assert.doesNotMatch(customize, /Your teams/);
+    const { HubOverview } = await vite.ssrLoadModule('/src/components/HubOverview.jsx');
+    const hub = renderToStaticMarkup(
+      React.createElement(HubOverview, {
+        items: [
+          { ...items[0], startsAt: '2026-10-09T12:00:00' },
+          { ...items[1], sportsSource: 'ESPN', startsAt: '2026-10-10T12:00:00' },
+        ],
+        notes: [{ id: 'note', title: 'Shopping', body: 'Remember milk' }],
+        members: [],
+        showAgenda: true,
+        showNotes: true,
+        onOpenEvent() {},
+        now: new Date('2026-10-09T09:00:00'),
+      }),
+    );
+    assert.match(hub, /Your week/);
+    assert.match(hub, /Today’s plans/);
+    assert.match(hub, /Next game/);
+    assert.match(hub, /Remember milk/);
+    assert.doesNotMatch(hub, /calendar-grid/);
+    const saturday = renderToStaticMarkup(
+      React.createElement(HubOverview, {
+        items: Array.from({ length: 4 }, (_, index) => ({
+          ...items[0],
+          id: `sport-${index}`,
+          title: `Saturday game ${index}`,
+          sportsSource: 'ESPN',
+          startsAt: '2026-10-10T12:00:00',
+        })),
+        notes: [],
+        members: [],
+        showAgenda: true,
+        showNotes: true,
+        onOpenEvent() {},
+        now: new Date('2026-10-10T09:00:00'),
+      }),
+    );
+    assert.match(saturday, /4 plans for the day/);
+    assert.match(saturday, /Saturday game 3/);
+    assert.doesNotMatch(saturday, /Nothing on the calendar for this day/);
   } finally {
     await vite.close();
   }

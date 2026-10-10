@@ -1,3 +1,4 @@
+import { Select } from './Select.jsx';
 import { DateTimePicker } from './DateTimePicker.jsx';
 import { weekdays, localDateTime, assignedMemberIds } from '../../shared/calendar.js';
 import { ReminderTiming } from './ReminderTiming.jsx';
@@ -40,13 +41,13 @@ export function EventEditor({
           </label>
           <label>
             Type
-            <select
+            <Select
               value={draft.type}
               onChange={(e) => onChange({ ...draft, type: e.target.value })}
             >
               <option value="event">Event</option>
               <option value="reminder">Reminder</option>
-            </select>
+            </Select>
           </label>
           <label className="check">
             <input
@@ -151,7 +152,7 @@ export function EventEditor({
           </fieldset>
           <label>
             Repeat
-            <select
+            <Select
               disabled={occurrenceOnly}
               value={draft.repeat || 'none'}
               onChange={(event) =>
@@ -170,7 +171,7 @@ export function EventEditor({
               <option value="custom">Custom weekdays</option>
               <option value="monthly">Monthly</option>
               <option value="yearly">Yearly</option>
-            </select>
+            </Select>
           </label>
           {!occurrenceOnly && draft.repeat === 'custom' && (
             <fieldset className="repeat-weekdays">
