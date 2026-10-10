@@ -5,6 +5,8 @@ import { createPostgresRepository } from './adapters/postgres.js';
 import { createApp } from './http.js';
 import { createWeather } from './domain/weather.js';
 import { createOpenMeteo } from './adapters/openMeteo.js';
+import { createSports } from './domain/sports.js';
+import { createEspn } from './adapters/espn.js';
 
 // Composition root: the only place that chooses concrete backend adapters.
 const storage = process.env.STORAGE || 'postgres';
@@ -25,6 +27,7 @@ const server = createApp(
     if (pool) await pool.query('SELECT 1');
   },
   weather,
+  createSports(createEspn()),
 ).listen(process.env.PORT || 3001, process.env.HOST || '127.0.0.1', () =>
   console.log('Hubby API ready on port', process.env.PORT || 3001),
 );

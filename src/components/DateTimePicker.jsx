@@ -1,3 +1,4 @@
+import { Select } from './Select.jsx';
 import { useId, useState } from 'react';
 import { toHour24 } from '../../shared/calendar.js';
 import { dayKey } from './Calendar.jsx';
@@ -171,7 +172,7 @@ export function DateTimePicker({ value, onChange, weekStart = 0, hideTime = fals
             ))}
             <label className="picker-period">
               AM / PM
-              <select
+              <Select
                 value={period}
                 onChange={(event) =>
                   onChange(`${datePart}T${pad(toHour24(hour, event.target.value))}:${pad(minute)}`)
@@ -179,7 +180,7 @@ export function DateTimePicker({ value, onChange, weekStart = 0, hideTime = fals
               >
                 <option value="AM">AM</option>
                 <option value="PM">PM</option>
-              </select>
+              </Select>
             </label>
           </div>
         </div>

@@ -1,3 +1,4 @@
+import { FamilySetup } from './components/FamilySetup.jsx';
 import { useEffect, useState } from 'react';
 import { Groceries } from './components/Groceries.jsx';
 import { Agenda } from './components/Agenda.jsx';
@@ -7,8 +8,10 @@ import { EventDetails } from './components/EventDetails.jsx';
 import { EventEditor } from './components/EventEditor.jsx';
 import { Weather, WeatherSummary } from './components/Weather.jsx';
 import { useWeather } from './hooks/useWeather.js';
-import { FamilyMembers } from './components/FamilyMembers.jsx';
-import { Settings } from './components/Settings.jsx';
+import { useSportsCalendar } from './hooks/useSportsCalendar.js';
+import { Sports } from './components/Sports.jsx';
+import { Customize } from './components/Customize.jsx';
+import { HubOverview } from './components/HubOverview.jsx';
 import { ReminderCenter } from './components/ReminderCenter.jsx';
 import { useReminders } from './hooks/useReminders.js';
 import { ConfirmDialog } from './components/ConfirmDialog.jsx';
@@ -32,6 +35,7 @@ const pageTitles = {
   notes: 'The family notebook',
   groceries: 'Stock up on the little things',
   weather: 'A look outside',
+  sports: 'Make room for game day',
   settings: 'Make yourself at home',
 };
 
@@ -43,6 +47,8 @@ const defaults = {
   weekStart: 0,
   notes: true,
   agenda: true,
+  sportsFavorites: {},
+  sportsCalendarTeams: {},
 };
 function readSettings() {
   try {
@@ -58,7 +64,18 @@ export function App({ repository }) {
   const weatherProps = useWeather(repository);
   const [tab, setTab] = useState(location.hash.slice(1) || 'home');
   const [settings, setSettings] = useState(readSettings);
+  // Calendar inclusion is opt-in and independent of favorite sorting in Sports.
+  const calendarTeams = Object.fromEntries(
+    Object.entries(settings.sportsFavorites || {}).map(([league, ids]) => [
+      league,
+      ids.filter((id) => (settings.sportsCalendarTeams?.[league] || []).includes(id)),
+    ]),
+  );
+  const sportsCalendar = useSportsCalendar(repository, calendarTeams);
   const [data, setData] = useState({ notes: [], events: [], groceries: [], members: [] });
+  const [loaded, setLoaded] = useState(false);
+  const [settingUp, setSettingUp] = useState(false);
+  const calendarEvents = [...data.events, ...sportsCalendar.events];
   const reminderProps = useReminders(data.events);
   const [status, setStatus] = useState('Connecting…');
   const [error, setError] = useState('');
@@ -125,6 +142,8 @@ export function App({ repository }) {
         ]);
         if (active) {
           setData({ notes, events, groceries, members });
+          setLoaded(true);
+          if (!members.length) setSettingUp(true);
           setStatus(
             health.storage === 'memory'
               ? 'Temporary demo · not persisted'
@@ -267,7 +286,7 @@ export function App({ repository }) {
     onDelete: (id) => remove('notes', id),
   };
   const agendaProps = {
-    items: data.events,
+    items: calendarEvents,
     onEdit: showEvent,
     members: data.members,
     onSave: (item) => {
@@ -283,6 +302,30 @@ export function App({ repository }) {
       setConfirmDelete(true);
     },
   };
+  // Gate the shell itself rather than placing a dismissible overlay over active screens.
+  // Failed initial loading offers retry instead of treating unknown data as an empty family.
+  if (!loaded || settingUp || !data.members.length) {
+    return (
+      <div
+        className={`app setup-shell ${settings.dark ? 'dark' : ''}`}
+        style={{ '--accent': settings.accent }}
+      >
+        {!loaded ? (
+          <main className="family-setup">
+            <h1>Connecting to your kitchen</h1>
+            <p role="status">{error || 'Loading family members...'}</p>
+            {error && <button onClick={() => location.reload()}>Try again</button>}
+          </main>
+        ) : (
+          <FamilySetup
+            members={data.members}
+            onSave={(member) => save('members', member)}
+            onContinue={() => setSettingUp(false)}
+          />
+        )}
+      </div>
+    );
+  }
   return (
     <div
       className={`app ${settings.dark ? 'dark' : ''} ${settings.large ? 'large' : ''}`}
@@ -300,6 +343,7 @@ export function App({ repository }) {
             ['notes', '≡', 'Notes'],
             ['groceries', '\u2637', 'Groceries'],
             ['weather', '\u2600', 'Weather'],
+            ['sports', '\u26bd', 'Sports'],
             ['settings', '⚙', 'Customize'],
           ].map(([id, icon, label]) => (
             <a key={id} href={`#${id}`} className={tab === id ? 'active' : ''}>
@@ -326,6 +370,11 @@ export function App({ repository }) {
             <h1>{tab === 'home' ? settings.name : pageTitles[tab] || pageTitles.calendar}</h1>
           </div>
           {tab === 'home' && <WeatherSummary {...weatherProps} />}
+          {tab === 'home' && (
+            <button className="primary" onClick={() => editEvent(null)}>
+              + Add a plan
+            </button>
+          )}
           <time>
             {clock.toLocaleTimeString(undefined, {
               hour: 'numeric',
@@ -339,46 +388,26 @@ export function App({ repository }) {
             {error}
           </p>
         )}
+        {['home', 'calendar'].includes(tab) && sportsCalendar.error && (
+          <p role="status" className="hint">
+            {sportsCalendar.error}
+          </p>
+        )}
         {tab === 'home' && (
-          <>
-            <div className="welcome">
-              <div>
-                <p className="eyebrow">YOUR EVERYDAY, IN ONE PLACE</p>
-                <h2>Room for all the little things.</h2>
-                <p>Plans, reminders, and notes for the people who call this home.</p>
-              </div>
-              <button className="primary" onClick={() => editEvent(null)}>
-                + Add to calendar
-              </button>
-            </div>
-            <div className="dashboard">
-              <Calendar
-                items={data.events}
-                members={data.members}
-                weekStart={Number(settings.weekStart)}
-                onSelect={(day) => editEvent(null, day)}
-                onEdit={showEvent}
-                onMove={moveEvent}
-              />
-              <div className="widgets">
-                {settings.agenda && <Agenda {...agendaProps} compact />}
-                {settings.notes && (
-                  <Notes
-                    {...notesProps}
-                    compact
-                    onOpen={() => {
-                      location.hash = 'notes';
-                    }}
-                  />
-                )}
-              </div>
-            </div>
-          </>
+          <HubOverview
+            items={calendarEvents}
+            notes={data.notes}
+            members={data.members}
+            showAgenda={settings.agenda}
+            showNotes={settings.notes}
+            onOpenEvent={showEvent}
+            now={clock}
+          />
         )}
         {tab === 'calendar' && (
           <>
             <Calendar
-              items={data.events}
+              items={calendarEvents}
               members={data.members}
               weekStart={Number(settings.weekStart)}
               onSelect={(day) => editEvent(null, day)}
@@ -389,6 +418,9 @@ export function App({ repository }) {
           </>
         )}
         {tab === 'weather' && <Weather {...weatherProps} />}
+        {tab === 'sports' && (
+          <Sports repository={repository} favorites={settings.sportsFavorites} />
+        )}
         {tab === 'notes' && <Notes {...notesProps} />}
         {tab === 'groceries' && (
           <Groceries
@@ -398,21 +430,20 @@ export function App({ repository }) {
           />
         )}
         {tab === 'settings' && (
-          <>
-            <Settings
-              settings={settings}
-              onChange={setSettings}
-              onReset={() => setSettings(defaults)}
-            />
-            <FamilyMembers
-              members={data.members}
-              onSave={(member) => save('members', member)}
-              onDelete={(id) => remove('members', id)}
-            />
-          </>
+          <Customize
+            settings={settings}
+            onChange={setSettings}
+            onReset={() => setSettings(defaults)}
+            members={data.members}
+            onSaveMember={(member) => save('members', member)}
+            onDeleteMember={(id) => remove('members', id)}
+            repository={repository}
+          />
         )}
 
-        {!['home', 'calendar', 'notes', 'groceries', 'weather', 'settings'].includes(tab) && (
+        {!['home', 'calendar', 'notes', 'groceries', 'weather', 'sports', 'settings'].includes(
+          tab,
+        ) && (
           <p>
             View not found. <a href="#home">Go home</a>
           </p>

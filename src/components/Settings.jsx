@@ -1,3 +1,4 @@
+import { Select } from './Select.jsx';
 // Display-only settings view; the shell owns persistence and defaults.
 export function Settings({ settings, onChange, onReset }) {
   return (
@@ -25,13 +26,13 @@ export function Settings({ settings, onChange, onReset }) {
       </label>
       <label>
         Week starts on
-        <select
+        <Select
           value={settings.weekStart}
           onChange={(e) => onChange({ ...settings, weekStart: Number(e.target.value) })}
         >
           <option value={0}>Sunday</option>
           <option value={1}>Monday</option>
-        </select>
+        </Select>
       </label>
       {[
         ['dark', 'Dark theme'],

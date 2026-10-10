@@ -109,6 +109,7 @@ export function planMembers(item, members) {
 }
 
 export function planMemberLabel(item, members) {
+  if (item.sportsSource) return (item.favoriteTeamNames || []).join(', ') || 'ESPN sports';
   return (
     planMembers(item, members)
       .map((member) => member.title)
@@ -117,6 +118,18 @@ export function planMemberLabel(item, members) {
 }
 
 export function planStyle(item, members) {
+  if (item.sportsSource && item.sportsColors?.length) {
+    if (item.sportsColors.length === 1) return eventStyle({ color: item.sportsColors[0] });
+    return {
+      backgroundImage: `linear-gradient(135deg, ${item.sportsColors
+        .map(
+          (color, index) =>
+            `${color} ${(index * 100) / item.sportsColors.length}% ${((index + 1) * 100) / item.sportsColors.length}%`,
+        )
+        .join(', ')})`,
+      color: '#ffffff',
+    };
+  }
   const people = planMembers(item, members);
   if (people.length < 2) return eventStyle(people[0]);
   const bands = people.map(

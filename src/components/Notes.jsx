@@ -1,3 +1,4 @@
+import { DeleteButton } from './DeleteButton.jsx';
 import { useState } from 'react';
 
 // Both widget and full screen use this feature component. The parent supplies
@@ -83,18 +84,13 @@ export function Notes({ items, onSave, onDelete, compact = false, onOpen }) {
               >
                 Edit
               </button>
-              <button
-                onClick={async () => {
-                  if (!window.confirm(`Delete “${note.title}”?`)) return;
-                  try {
-                    await onDelete(note.id);
-                  } catch (err) {
-                    setError(err.message);
-                  }
+              <DeleteButton
+                title={note.title}
+                disabled={busy}
+                onDelete={async () => {
+                  await onDelete(note.id);
                 }}
-              >
-                Delete
-              </button>
+              />
             </div>
           </article>
         ))}

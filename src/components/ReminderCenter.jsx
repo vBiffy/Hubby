@@ -1,3 +1,4 @@
+import { Select } from './Select.jsx';
 import { useEffect, useRef, useState } from 'react';
 import { planStyle, planMemberLabel, assignedMemberIds } from '../../shared/calendar.js';
 import { snoozeOptions } from '../../shared/reminders.js';
@@ -90,13 +91,13 @@ export function ReminderCenter({ reminders, now, members, onSnooze, onDismiss, s
       </div>
       <label className="reminder-snooze">
         Snooze for
-        <select value={minutes} onChange={(event) => setMinutes(Number(event.target.value))}>
+        <Select value={minutes} onChange={(event) => setMinutes(Number(event.target.value))}>
           {snoozeOptions.map((value) => (
             <option key={value} value={value}>
               {value} minutes
             </option>
           ))}
-        </select>
+        </Select>
       </label>
     </section>
   );

@@ -153,3 +153,46 @@ The Weather tab shows a seven-day Lansing forecast and today's hourly temperatur
 conditions, precipitation chances, and wind. Hour labels use Lansing time and
 12-hour formatting. The kitchen header keeps its compact current-weather widget.
 Both share the existing ten-minute forecast cache; no database migration is needed.
+
+## Sports
+
+The Sports tab covers FBS college football, NFL, English Premier League, WNBA,
+and men's Division I college basketball. Select favorite teams under Customize →
+Sports → Your teams to prioritize their games within each day. Use the day picker
+to jump between dates; only the games list scrolls. Favorites are stored with the other
+preferences on this device. No sports widget appears on the kitchen hub.
+
+ESPN's public keyless endpoints provide scores and schedules through the backend.
+The tab refreshes every minute while open, shows three days of recent results and
+two weeks of upcoming scoreboards, and adds available future games from favorite
+team schedules. Between seasons, an empty schedule is normal. ESPN's endpoints
+are undocumented and may change; failures are labeled and can be retried.
+
+Customize separates Display, Family, and Sports into subtabs so only the selected
+settings section is shown.
+
+Under Customize → Sports, each favorite has a **Show games on calendar** checkbox,
+off by default. Enabled teams' games appear as synced ESPN calendar entries with
+no reminders and their primary team colors. If both teams are enabled, a single
+entry shows both colors diagonally. These source-managed entries refresh every
+five minutes and are not copied into PostgreSQL. Disable the toggle or remove
+the favorite to hide them; household calendar events remain editable as usual.
+
+College football and men's basketball offer an AP Top 25 view with the poll date
+and rank changes. Current AP ranks appear beside teams in upcoming/live games and
+synced calendar titles. Polls older than two weeks remain viewable but do not add
+badges; completed games do not receive current rankings. Coaches/CFP polls are
+never substituted. AP data refreshes hourly and a poll failure does not hide games.
+
+### Shared controls and first-time family setup
+
+Dropdown menus are rendered by `src/components/Select.jsx` using the app theme,
+with keyboard navigation, Escape, and outside-tap dismissal. Delete confirmations
+use the shared themed `ConfirmDialog` through `DeleteButton` instead of browser prompts.
+
+The kitchen shell waits for its initial data load. If no family members exist,
+setup is required before any feature can be used, including direct tab links.
+Add at least one member with a unique color, then choose **Continue to kitchen**.
+The testing shortcut saves **Mom**, **Dad**, and **Kid** through the normal member API.
+Removing the last member brings setup back. Failed initial connections offer retry;
+they do not assume the family is empty. Memory-mode demo members reset on server restart.

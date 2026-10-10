@@ -45,7 +45,7 @@ export function Agenda({ items, onEdit, onSave, onDelete, compact = false, membe
       {visible.map((item) => (
         <article key={item.occurrenceKey} className="agenda-item">
           <div
-            className={`date-badge ${assignedMemberIds(item).length > 1 ? 'shared-event' : ''}`}
+            className={`date-badge ${assignedMemberIds(item).length > 1 || item.sportsColors?.length > 1 ? 'shared-event' : ''}`}
             style={planStyle(item, members)}
           >
             <span className="calendar-event-label">
@@ -77,13 +77,15 @@ export function Agenda({ items, onEdit, onSave, onDelete, compact = false, membe
                 ` ${item.repeatDays.map((day) => weekdays[day].slice(0, 3)).join('/')}`}
             </small>
           </div>
-          <button
-            aria-label={item.done ? 'Mark incomplete' : 'Mark complete'}
-            onClick={() => act(() => onSave({ ...item, done: !item.done }))}
-          >
-            {item.done ? '↶' : '✓'}
-          </button>
-          {!compact && (
+          {!item.sportsSource && (
+            <button
+              aria-label={item.done ? 'Mark incomplete' : 'Mark complete'}
+              onClick={() => act(() => onSave({ ...item, done: !item.done }))}
+            >
+              {item.done ? '↶' : '✓'}
+            </button>
+          )}
+          {!compact && !item.sportsSource && (
             <button
               aria-label={`Delete ${item.title}${item.repeat && item.repeat !== 'none' ? ' (whole series)' : ''}`}
               onClick={() => {

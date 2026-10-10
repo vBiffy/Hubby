@@ -1,3 +1,4 @@
+import { Select } from './Select.jsx';
 import { useState } from 'react';
 import { maxReminderMinutes } from '../../shared/reminders.js';
 
@@ -11,7 +12,7 @@ export function ReminderTiming({ value, onChange }) {
       <legend>When should we remind you?</legend>
       <label>
         Reminder time
-        <select
+        <Select
           value={selection}
           onChange={(event) => {
             const next = event.target.value;
@@ -30,7 +31,7 @@ export function ReminderTiming({ value, onChange }) {
             </option>
           ))}
           <option value="custom">Custom lead time</option>
-        </select>
+        </Select>
       </label>
       {custom && value != null && (
         <label>
