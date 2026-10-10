@@ -7,7 +7,7 @@ const pad = (number) => String(number).padStart(2, '0');
 // Keep the existing local-wall-time contract. The event editor remains
 // responsible for conversion to UTC; choosing a date never shifts its time.
 // Rendering our own calendar avoids the unthemeable browser/OS date popup.
-export function DateTimePicker({ value, onChange, weekStart = 0 }) {
+export function DateTimePicker({ value, onChange, weekStart = 0, hideTime = false }) {
   const id = useId();
   const [open, setOpen] = useState(false);
   const [datePart, timePart = '09:00'] = value.split('T');
@@ -43,7 +43,7 @@ export function DateTimePicker({ value, onChange, weekStart = 0 }) {
 
   return (
     <fieldset className="datetime-picker">
-      <legend>Date and time</legend>
+      <legend>{hideTime ? 'Date' : 'Date and time'}</legend>
       <button
         type="button"
         id={`${id}-date-focus`}
@@ -128,60 +128,62 @@ export function DateTimePicker({ value, onChange, weekStart = 0 }) {
           </button>
         </div>
       )}
-      <div className="picker-time">
-        <span className="picker-caption">TIME · 12 HOUR</span>
-        <div className="picker-time-fields">
-          {[
-            ['hour', hour, 12],
-            ['minute', minute, 59],
-          ].map(([part, number, max]) => (
-            <div className="picker-stepper" key={part}>
-              <button
-                type="button"
-                aria-label={`Decrease ${part}`}
-                onClick={() =>
-                  changeTime(part, number <= (part === 'hour' ? 1 : 0) ? max : number - 1)
+      {!hideTime && (
+        <div className="picker-time">
+          <span className="picker-caption">TIME · 12 HOUR</span>
+          <div className="picker-time-fields">
+            {[
+              ['hour', hour, 12],
+              ['minute', minute, 59],
+            ].map(([part, number, max]) => (
+              <div className="picker-stepper" key={part}>
+                <button
+                  type="button"
+                  aria-label={`Decrease ${part}`}
+                  onClick={() =>
+                    changeTime(part, number <= (part === 'hour' ? 1 : 0) ? max : number - 1)
+                  }
+                >
+                  −
+                </button>
+                <label className="picker-number">
+                  <span>{part === 'hour' ? 'Hour' : 'Minute'}</span>
+                  <input
+                    type="number"
+                    required
+                    min={part === 'hour' ? 1 : 0}
+                    max={max}
+                    step={1}
+                    value={pad(number)}
+                    onChange={(event) => changeTime(part, event.target.valueAsNumber)}
+                  />
+                </label>
+                <button
+                  type="button"
+                  aria-label={`Increase ${part}`}
+                  onClick={() =>
+                    changeTime(part, number === max ? (part === 'hour' ? 1 : 0) : number + 1)
+                  }
+                >
+                  +
+                </button>
+              </div>
+            ))}
+            <label className="picker-period">
+              AM / PM
+              <select
+                value={period}
+                onChange={(event) =>
+                  onChange(`${datePart}T${pad(toHour24(hour, event.target.value))}:${pad(minute)}`)
                 }
               >
-                −
-              </button>
-              <label className="picker-number">
-                <span>{part === 'hour' ? 'Hour' : 'Minute'}</span>
-                <input
-                  type="number"
-                  required
-                  min={part === 'hour' ? 1 : 0}
-                  max={max}
-                  step={1}
-                  value={pad(number)}
-                  onChange={(event) => changeTime(part, event.target.valueAsNumber)}
-                />
-              </label>
-              <button
-                type="button"
-                aria-label={`Increase ${part}`}
-                onClick={() =>
-                  changeTime(part, number === max ? (part === 'hour' ? 1 : 0) : number + 1)
-                }
-              >
-                +
-              </button>
-            </div>
-          ))}
-          <label className="picker-period">
-            AM / PM
-            <select
-              value={period}
-              onChange={(event) =>
-                onChange(`${datePart}T${pad(toHour24(hour, event.target.value))}:${pad(minute)}`)
-              }
-            >
-              <option value="AM">AM</option>
-              <option value="PM">PM</option>
-            </select>
-          </label>
+                <option value="AM">AM</option>
+                <option value="PM">PM</option>
+              </select>
+            </label>
+          </div>
         </div>
-      </div>
+      )}
     </fieldset>
   );
 }

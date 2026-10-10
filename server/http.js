@@ -28,6 +28,9 @@ export function createApp(hub, storage, health = async () => {}, weather) {
     res.set('Cache-Control', 'no-store').json(await weather.today());
   });
   app.get('/api/:kind', async (req, res) => res.json(await hub.list(req.params.kind)));
+  app.post('/api/events/:id/restore', async (req, res) =>
+    res.status(201).json(await hub.save('events', req.body, req.params.id, true)),
+  );
   app.post('/api/:kind', async (req, res) =>
     res.status(201).json(await hub.save(req.params.kind, req.body)),
   );

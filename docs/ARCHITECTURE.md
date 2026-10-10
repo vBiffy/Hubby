@@ -53,3 +53,18 @@ validation requires a member name and six-digit hex color. The memory adapter an
 PostgreSQL partial unique index enforce color uniqueness during concurrent saves.
 Assigned members cannot be deleted until their events are reassigned. Preferences
 remain per screen; members and events are shared through the selected storage.
+
+## Reminder delivery
+
+`shared/reminders.js` is the pure scheduling policy: it expands recurring plans,
+computes due times from `reminderMinutes`, and applies per-occurrence decisions.
+`useReminders` supplies the clock, wake/focus checks, and action callbacks.
+`reminderStorage` implements per-screen persistence independently of the UI.
+`ReminderCenter` renders a non-modal, grouped popup with member colors and actions.
+`ReminderTiming` captures the lead time for either plan type in the editor.
+
+Delivery identities include the event ID, occurrence timestamp, and lead time.
+Title/member edits retain decisions; rescheduling creates a new identity.
+Completed occurrences never alert. Snooze delays notification rather than moving
+the event. Expired persisted decisions are pruned on read/write. The catch-up
+window is 24 hours; existing event records without a lead time have alerts disabled.

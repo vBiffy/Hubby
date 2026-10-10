@@ -1,5 +1,6 @@
 import { DateTimePicker } from './DateTimePicker.jsx';
-import { weekdays } from '../../shared/calendar.js';
+import { weekdays, localDateTime, assignedMemberIds } from '../../shared/calendar.js';
+import { ReminderTiming } from './ReminderTiming.jsx';
 
 // The editor receives actions; it does not know about HTTP or storage.
 export function EventEditor({
@@ -7,10 +8,13 @@ export function EventEditor({
   onChange,
   onSubmit,
   onCancel,
+  onDelete,
   weekStart,
   busy,
   error,
   members = [],
+  occurrenceOnly = false,
+  conflicts = [],
 }) {
   const planType = draft.type === 'reminder' ? 'Reminder' : 'Event';
 
@@ -44,28 +48,111 @@ export function EventEditor({
               <option value="reminder">Reminder</option>
             </select>
           </label>
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={draft.allDay || false}
+              onChange={(event) => onChange({ ...draft, allDay: event.target.checked })}
+            />
+            All day
+          </label>
           <DateTimePicker
             value={draft.startsAt}
+            hideTime={draft.allDay}
             weekStart={weekStart}
             onChange={(startsAt) => onChange({ ...draft, startsAt })}
           />
-          <label>
-            Family member
-            <select
-              value={draft.memberId || ''}
-              onChange={(event) => onChange({ ...draft, memberId: event.target.value || null })}
-            >
-              <option value="">Whole household</option>
-              {members.map((member) => (
-                <option key={member.id} value={member.id}>
-                  {member.title}
-                </option>
-              ))}
-            </select>
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={Boolean(draft.endsAt)}
+              onChange={(event) => {
+                const end = new Date(draft.startsAt);
+                end.setHours(end.getHours() + 1);
+                onChange({ ...draft, endsAt: event.target.checked ? localDateTime(end) : '' });
+              }}
+            />
+            Set an end date/time
           </label>
+          {draft.endsAt && (
+            <div>
+              <p>Ends (inclusive last date for all-day plans)</p>
+              <DateTimePicker
+                value={draft.endsAt}
+                hideTime={draft.allDay}
+                weekStart={weekStart}
+                onChange={(endsAt) => onChange({ ...draft, endsAt })}
+              />
+              {!draft.allDay && (
+                <p className="hint">
+                  Duration:{' '}
+                  {Math.round((new Date(draft.endsAt) - new Date(draft.startsAt)) / 60000)} minutes
+                </p>
+              )}
+            </div>
+          )}
+          {conflicts.length > 0 && (
+            <p role="status" className="hint">
+              Overlaps with: {conflicts.map((item) => item.title).join(', ')}. You can still save.
+            </p>
+          )}
+          {occurrenceOnly && <p className="hint">Saving changes only this occurrence.</p>}
+          {draft.type === 'event' && (
+            <label>
+              Location (optional)
+              <input
+                maxLength={300}
+                value={draft.location || ''}
+                placeholder="e.g. Office or community center"
+                onChange={(event) => onChange({ ...draft, location: event.target.value })}
+              />
+            </label>
+          )}
+          <ReminderTiming
+            value={draft.reminderMinutes ?? null}
+            onChange={(reminderMinutes) => onChange({ ...draft, reminderMinutes })}
+          />
+          {draft.allDay && (
+            <p className="hint">All-day alerts are relative to 9 AM on the first day.</p>
+          )}
+          <fieldset className="plan-members">
+            <legend>Family members</legend>
+            <label className="check">
+              <input
+                type="checkbox"
+                checked={!assignedMemberIds(draft).length}
+                onChange={() => onChange({ ...draft, memberIds: [], memberId: null })}
+              />
+              Whole household
+            </label>
+            {members.map((member) => {
+              const selected = assignedMemberIds(draft);
+              return (
+                <label className="check" key={member.id}>
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(member.id)}
+                    onChange={() => {
+                      const memberIds = selected.includes(member.id)
+                        ? selected.filter((id) => id !== member.id)
+                        : [...selected, member.id];
+                      onChange({
+                        ...draft,
+                        memberIds,
+                        memberId: memberIds.length === 1 ? memberIds[0] : null,
+                      });
+                    }}
+                  />
+                  <span className="member-swatch" style={{ backgroundColor: member.color }} />
+                  {member.title}
+                </label>
+              );
+            })}
+          </fieldset>
           <label>
             Repeat
             <select
+              disabled={occurrenceOnly}
               value={draft.repeat || 'none'}
               onChange={(event) =>
                 onChange({
@@ -85,7 +172,7 @@ export function EventEditor({
               <option value="yearly">Yearly</option>
             </select>
           </label>
-          {draft.repeat === 'custom' && (
+          {!occurrenceOnly && draft.repeat === 'custom' && (
             <fieldset className="repeat-weekdays">
               <legend>Repeat every week on</legend>
               <div className="repeat-day-options">
@@ -122,7 +209,7 @@ export function EventEditor({
               )}
             </fieldset>
           )}
-          {draft.repeat && draft.repeat !== 'none' && (
+          {!occurrenceOnly && draft.repeat && draft.repeat !== 'none' && (
             <>
               <label>
                 Repeat through (optional)
@@ -134,8 +221,8 @@ export function EventEditor({
                 />
               </label>
               <p className="hint">
-                Editing or deleting changes the whole series. Completion applies to one occurrence.
-                Dates that don't exist are skipped.
+                Series edits keep existing occurrence exceptions. Completion applies to one
+                occurrence. Dates that don't exist are skipped.
               </p>
             </>
           )}
@@ -154,6 +241,11 @@ export function EventEditor({
             <button disabled={busy} type="button" onClick={onCancel}>
               Cancel
             </button>
+            {draft.id && onDelete && (
+              <button disabled={busy} type="button" className="delete-plan" onClick={onDelete}>
+                Delete {planType}
+              </button>
+            )}
           </div>
         </form>
       </section>

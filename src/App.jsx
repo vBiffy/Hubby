@@ -3,12 +3,30 @@ import { Groceries } from './components/Groceries.jsx';
 import { Agenda } from './components/Agenda.jsx';
 import { Notes } from './components/Notes.jsx';
 import { Calendar, dayKey } from './components/Calendar.jsx';
+import { EventDetails } from './components/EventDetails.jsx';
 import { EventEditor } from './components/EventEditor.jsx';
 import { Weather, WeatherSummary } from './components/Weather.jsx';
 import { useWeather } from './hooks/useWeather.js';
 import { FamilyMembers } from './components/FamilyMembers.jsx';
 import { Settings } from './components/Settings.jsx';
-
+import { ReminderCenter } from './components/ReminderCenter.jsx';
+import { useReminders } from './hooks/useReminders.js';
+import { ConfirmDialog } from './components/ConfirmDialog.jsx';
+import { moveOccurrence, occurrences, overlaps, localDateTime } from '../shared/calendar.js';
+function calendarConflicts(draft, items) {
+  if (!draft.endsAt && !draft.allDay) return [];
+  const start = new Date(draft.startsAt);
+  const end = new Date(draft.endsAt || draft.startsAt);
+  if (draft.allDay) {
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+  }
+  if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime())) return [];
+  const candidate = { ...draft, startsAt: start.toISOString(), endsAt: end.toISOString() };
+  return occurrences(items, start, end).filter(
+    (item) => item.id !== draft.id && overlaps(candidate, item),
+  );
+}
 const pageTitles = {
   calendar: 'A little planning goes a long way',
   notes: 'The family notebook',
@@ -41,9 +59,41 @@ export function App({ repository }) {
   const [tab, setTab] = useState(location.hash.slice(1) || 'home');
   const [settings, setSettings] = useState(readSettings);
   const [data, setData] = useState({ notes: [], events: [], groceries: [], members: [] });
+  const reminderProps = useReminders(data.events);
   const [status, setStatus] = useState('Connecting…');
   const [error, setError] = useState('');
   const [draft, setDraft] = useState(null);
+  const [details, setDetails] = useState(null);
+  const selectedPlan = draft || details;
+  const [scope, setScope] = useState('occurrence');
+  const [undo, setUndo] = useState(null);
+  useEffect(() => {
+    if (!undo) return;
+    const timer = setTimeout(() => setUndo(null), 30000);
+    return () => clearTimeout(timer);
+  }, [undo]);
+  async function undoChange() {
+    setBusy(true);
+    try {
+      const current = await repository.list('events');
+      const live = current.find((item) => item.id === undo.before.id);
+      if (undo.deleted) {
+        const restored = await repository.restore(undo.before);
+        setData((previous) => ({ ...previous, events: [restored, ...previous.events] }));
+      } else {
+        if (!live || live.updatedAt !== undo.after.updatedAt) {
+          throw new Error('This plan changed again. Undo would overwrite a newer edit.');
+        }
+        await save('events', undo.before);
+      }
+      setUndo(null);
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [busy, setBusy] = useState(false);
   const [clock, setClock] = useState(new Date());
   useEffect(() => {
@@ -102,16 +152,61 @@ export function App({ repository }) {
       ...previous,
       [kind]: [saved, ...previous[kind].filter((x) => x.id !== saved.id)],
     }));
+    return saved;
   }
   async function remove(kind, id) {
     await repository.remove(kind, id);
     setData((previous) => ({ ...previous, [kind]: previous[kind].filter((x) => x.id !== id) }));
   }
+  async function moveEvent(occurrence, day) {
+    const series = data.events.find((event) => event.id === occurrence.id);
+    const after = await save('events', moveOccurrence(series, occurrence, day));
+    setUndo({ before: series, after, label: 'Plan moved' });
+  }
+  async function deletePlan() {
+    setBusy(true);
+    try {
+      const before = data.events.find((item) => item.id === selectedPlan.id);
+      if (scope === 'occurrence' && selectedPlan.occurrenceDate) {
+        const after = await save('events', {
+          ...before,
+          excludedDates: [
+            ...new Set([...(before.excludedDates || []), selectedPlan.occurrenceDate]),
+          ],
+        });
+        setUndo({ before, after, label: 'Occurrence deleted' });
+      } else {
+        await remove('events', selectedPlan.id);
+        setUndo({ before, deleted: true, label: 'Plan deleted' });
+      }
+      setConfirmDelete(false);
+      setDetails(null);
+      setDraft(null);
+      setError('');
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  function showEvent(item) {
+    setError('');
+    if (!item) {
+      editEvent(null);
+      return;
+    }
+    setScope('occurrence');
+    setDetails(item);
+  }
   function editEvent(item, day = dayKey(new Date())) {
+    setDetails(null);
+    setError('');
     // datetime-local represents local wall time. Convert to ISO only on save,
     // and back to local wall time on edit to avoid timezone shifts.
-    // Clicking a repeated occurrence opens its source series, not a copied event.
-    if (item) item = data.events.find((event) => event.id === item.id) || item;
+    // Series edits use the source; occurrence edits retain the clicked date and identity.
+    if (item && scope === 'series') {
+      item = data.events.find((event) => event.id === item.id) || item;
+    }
     const date = item ? new Date(item.startsAt) : null;
     const hour = date ? String(date.getHours()).padStart(2, '0') : '';
     const minute = date ? String(date.getMinutes()).padStart(2, '0') : '';
@@ -120,6 +215,7 @@ export function App({ repository }) {
       item
         ? {
             ...item,
+            endsAt: item.endsAt ? localDateTime(item.endsAt) : '',
             startsAt: `${dayKey(date)}T${hour}:${minute}`,
           }
         : {
@@ -130,6 +226,7 @@ export function App({ repository }) {
             repeat: 'none',
             repeatUntil: '',
             memberId: null,
+            reminderMinutes: 15,
           },
     );
   }
@@ -138,10 +235,23 @@ export function App({ repository }) {
     setBusy(true);
 
     try {
-      await save('events', {
+      const changes = {
         ...draft,
         startsAt: new Date(draft.startsAt).toISOString(),
-      });
+        endsAt: draft.endsAt ? new Date(draft.endsAt).toISOString() : null,
+      };
+      const series = data.events.find((item) => item.id === draft.id);
+      const saved =
+        draft.occurrenceDate && scope === 'occurrence'
+          ? {
+              ...series,
+              occurrenceOverrides: {
+                ...series.occurrenceOverrides,
+                [draft.occurrenceDate]: changes,
+              },
+            }
+          : changes;
+      await save('events', saved);
       setDraft(null);
       setError('');
     } catch (err) {
@@ -158,7 +268,7 @@ export function App({ repository }) {
   };
   const agendaProps = {
     items: data.events,
-    onEdit: editEvent,
+    onEdit: showEvent,
     members: data.members,
     onSave: (item) => {
       const series = data.events.find((event) => event.id === item.id);
@@ -168,7 +278,10 @@ export function App({ repository }) {
       else completed.delete(item.occurrenceDate);
       return save('events', { ...series, completedDates: [...completed] });
     },
-    onDelete: (id) => remove('events', id),
+    onDelete: (item) => {
+      showEvent(item);
+      setConfirmDelete(true);
+    },
   };
   return (
     <div
@@ -244,7 +357,8 @@ export function App({ repository }) {
                 members={data.members}
                 weekStart={Number(settings.weekStart)}
                 onSelect={(day) => editEvent(null, day)}
-                onEdit={editEvent}
+                onEdit={showEvent}
+                onMove={moveEvent}
               />
               <div className="widgets">
                 {settings.agenda && <Agenda {...agendaProps} compact />}
@@ -268,7 +382,8 @@ export function App({ repository }) {
               members={data.members}
               weekStart={Number(settings.weekStart)}
               onSelect={(day) => editEvent(null, day)}
-              onEdit={editEvent}
+              onEdit={showEvent}
+              onMove={moveEvent}
             />
             <Agenda {...agendaProps} />
           </>
@@ -302,19 +417,69 @@ export function App({ repository }) {
             View not found. <a href="#home">Go home</a>
           </p>
         )}
+        {details && (
+          <EventDetails
+            item={details}
+            members={data.members}
+            busy={busy}
+            error={error}
+            scope={scope}
+            onScope={setScope}
+            onEdit={() => editEvent(details)}
+            onClose={() => setDetails(null)}
+            onDelete={() => {
+              setError('');
+              setConfirmDelete(true);
+            }}
+          />
+        )}
         {draft && (
           <EventEditor
             members={data.members}
             draft={draft}
+            occurrenceOnly={scope === 'occurrence' && Boolean(draft.occurrenceDate)}
+            conflicts={calendarConflicts(draft, data.events)}
             onChange={setDraft}
             onSubmit={submitEvent}
             onCancel={() => setDraft(null)}
+            onDelete={() => {
+              setError('');
+              setConfirmDelete(true);
+            }}
             weekStart={Number(settings.weekStart)}
             busy={busy}
             error={error}
           />
         )}
+        {confirmDelete && selectedPlan && (
+          <ConfirmDialog
+            title={`Delete ${selectedPlan.type === 'reminder' ? 'Reminder' : 'Event'}?`}
+            message={`Remove '${selectedPlan.title}'? ${
+              scope === 'series' && selectedPlan.repeat && selectedPlan.repeat !== 'none'
+                ? 'This will delete the entire recurring series and all its occurrences.'
+                : `This will remove this ${selectedPlan.type === 'reminder' ? 'reminder' : 'event'} from your calendar.`
+            } You can undo this for 30 seconds.`}
+            confirmLabel="Delete"
+            cancelLabel="Keep it"
+            busy={busy}
+            error={error}
+            onConfirm={deletePlan}
+            onCancel={() => setConfirmDelete(false)}
+          />
+        )}
       </main>
+      {undo && (
+        <div className="undo-toast" role="status">
+          <span>{undo.label}</span>
+          <button disabled={busy} onClick={undoChange}>
+            Undo
+          </button>
+          <button aria-label="Close undo notification" onClick={() => setUndo(null)}>
+            Close
+          </button>
+        </div>
+      )}
+      {!draft && !details && <ReminderCenter {...reminderProps} members={data.members} />}
     </div>
   );
 }

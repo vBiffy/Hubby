@@ -180,3 +180,17 @@ test('member colors choose contrasting text and leave household entries neutral'
   assert.equal(eventStyle({ color: '#000000' }).color, '#ffffff');
   assert.equal(eventStyle(undefined), undefined);
 });
+
+test('locations are optional for events, validated, and omitted for reminders', async () => {
+  const hub = createHub(createMemoryRepository());
+  const saved = await hub.save('events', plan({ location: ' Office ' }));
+  assert.equal(saved.location, 'Office');
+  const edited = await hub.save('events', { ...saved, title: 'Updated' }, saved.id);
+  assert.equal(edited.location, 'Office');
+  assert.equal((await hub.save('events', plan())).location, '');
+  const reminder = await hub.save('events', { ...saved, type: 'reminder' }, saved.id);
+  assert.equal(Object.hasOwn(reminder, 'location'), false);
+  for (const location of [42, 'x'.repeat(301)]) {
+    await assert.rejects(hub.save('events', plan({ location })), ValidationError);
+  }
+});
