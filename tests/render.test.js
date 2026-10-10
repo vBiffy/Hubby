@@ -107,6 +107,36 @@ test('calendar, editor and reminder popup render without crashing', async () => 
     );
     assert.doesNotMatch(reminderDetails, /Hidden location/);
     assert.match(reminderDetails, /Edit Reminder/);
+    const { Weather, WeatherSummary } = await vite.ssrLoadModule('/src/components/Weather.jsx');
+    const weather = {
+      day: '2026-10-09',
+      temperature: 60,
+      feelsLike: 58,
+      high: 65,
+      low: 45,
+      code: 2,
+      wind: 8,
+      precipitationChance: 20,
+      fetchedAt: '2026-10-09T12:00:00Z',
+      daily: [{ day: '2026-10-09', high: 65, low: 45, code: 2, precipitationChance: 20 }],
+      hourly: [
+        {
+          time: '2026-10-09T13:00',
+          temperature: 60,
+          feelsLike: 58,
+          code: 2,
+          wind: 8,
+          precipitationChance: 20,
+        },
+      ],
+    };
+    const weatherTab = renderToStaticMarkup(React.createElement(Weather, { weather }));
+    assert.match(weatherTab, /The week ahead/);
+    assert.match(weatherTab, /Today, hour by hour/);
+    assert.match(weatherTab, /1 PM/);
+    const summary = renderToStaticMarkup(React.createElement(WeatherSummary, { weather }));
+    assert.doesNotMatch(summary, /The week ahead/);
+    assert.match(summary, /60°F/);
   } finally {
     await vite.close();
   }

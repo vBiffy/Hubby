@@ -148,3 +148,8 @@ Moves and deletions offer **Undo** for 30 seconds. Undo preserves the original
 event ID and refuses to overwrite a newer edit. It is available in the current
 session only. These fields use the existing PostgreSQL JSON records, so no schema
 migration is needed; existing events continue to work.
+
+The Weather tab shows a seven-day Lansing forecast and today's hourly temperature,
+conditions, precipitation chances, and wind. Hour labels use Lansing time and
+12-hour formatting. The kitchen header keeps its compact current-weather widget.
+Both share the existing ten-minute forecast cache; no database migration is needed.

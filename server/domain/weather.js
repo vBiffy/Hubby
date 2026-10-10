@@ -7,7 +7,7 @@ export const lansing = {
   timezone: 'America/Detroit',
 };
 
-// Provider port: getToday(location) returns normalized current/daily weather.
+// Provider port: getToday(location) returns current, seven-day and today's hourly weather.
 // Cache and retry policy live here, independently of HTTP or the provider API.
 export function createWeather(provider, now = () => Date.now()) {
   let cached;

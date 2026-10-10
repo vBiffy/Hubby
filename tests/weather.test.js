@@ -23,7 +23,8 @@ test('weather adapter requests Lansing units/timezone and normalizes provider da
     assert.equal(url.searchParams.get('longitude'), String(lansing.longitude));
     assert.equal(url.searchParams.get('timezone'), 'America/Detroit');
     assert.equal(url.searchParams.get('temperature_unit'), 'fahrenheit');
-    assert.equal(url.searchParams.get('forecast_days'), '1');
+    assert.equal(url.searchParams.get('forecast_days'), '7');
+    assert.match(url.searchParams.get('hourly'), /precipitation_probability/);
     assert.ok(options.signal);
     return {
       ok: true,
@@ -35,15 +36,38 @@ test('weather adapter requests Lansing units/timezone and normalizes provider da
           wind_speed_10m: 8,
         },
         daily: {
-          time: ['2026-10-08'],
-          temperature_2m_max: [65],
-          temperature_2m_min: [45],
-          precipitation_probability_max: [20],
+          time: Array.from(
+            { length: 7 },
+            (_, index) => `2026-10-${8 + index < 10 ? '0' : ''}${8 + index}`,
+          ),
+          weather_code: Array(7).fill(2),
+          temperature_2m_max: Array(7).fill(65),
+          temperature_2m_min: Array(7).fill(45),
+          precipitation_probability_max: Array(7).fill(20),
+        },
+        hourly: {
+          time: Array.from(
+            { length: 48 },
+            (_, index) =>
+              `2026-10-${index < 24 ? '08' : '09'}T${String(index % 24).padStart(2, '0')}:00`,
+          ),
+          temperature_2m: Array(48).fill(60),
+          apparent_temperature: Array(48).fill(58),
+          weather_code: Array(48).fill(2),
+          precipitation_probability: Array(48).fill(20),
+          wind_speed_10m: Array(48).fill(8),
         },
       }),
     };
   });
-  assert.deepEqual(await provider.getToday(lansing), forecast);
+  const { daily, hourly, ...today } = await provider.getToday(lansing);
+  assert.deepEqual(today, forecast);
+  assert.equal(daily.length, 7);
+  assert.equal(daily[6].day, '2026-10-14');
+  assert.equal(hourly.length, 24);
+  assert.equal(hourly[0].time, '2026-10-08T00:00');
+  assert.equal(hourly[23].time, '2026-10-08T23:00');
+  assert.equal(hourly[0].temperature, 60);
 });
 
 test('weather adapter rejects incomplete data and upstream errors', async () => {

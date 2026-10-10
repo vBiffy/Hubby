@@ -1250,3 +1250,143 @@ input[type='color'] {
   color: var(--ink);
   box-shadow: 0 8px 30px #0003;
 }
+.weather-forecast {
+  margin-top: 32px;
+}
+
+.weather-week {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding: 4px 2px 16px;
+  gap: 12px;
+}
+
+.weather-week,
+.weather-hours {
+  min-width: 0;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.weather-week:focus-visible,
+.weather-hours:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 16px;
+}
+
+.weather-day {
+  flex: 0 0 200px;
+  scroll-snap-align: start;
+}
+
+.forecast-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.forecast-heading h3,
+.forecast-heading .hint {
+  margin: 0;
+}
+
+.forecast-heading .hint {
+  margin-top: 6px;
+}
+
+.forecast-heading .actions {
+  flex-wrap: nowrap;
+}
+
+.forecast-heading button {
+  width: 44px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 24px;
+}
+
+.weather-icon {
+  display: block;
+  width: 44px;
+  height: 44px;
+  margin: 20px 0 12px;
+  color: var(--ink);
+}
+
+.weather-current .weather-icon {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.weather-condition {
+  min-height: 2.8em;
+  margin: 8px 0;
+  color: var(--subtle);
+  font-size: 14px;
+}
+
+.weather-range {
+  white-space: nowrap;
+  font-size: 22px;
+}
+
+.weather-day,
+.weather-hour {
+  background: var(--background);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.weather-day h4,
+.weather-hour h4 {
+  margin: 0 0 8px;
+}
+
+.weather-day-date {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.weather-day-date > span:last-child {
+  color: var(--subtle);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.weather-day small,
+.weather-hour small {
+  display: block;
+  color: var(--subtle);
+  margin-top: 8px;
+}
+
+.weather-low {
+  color: var(--subtle);
+}
+
+.weather-hours {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  scroll-snap-type: x proximity;
+}
+
+.weather-hour {
+  flex: 0 0 150px;
+  scroll-snap-align: start;
+}
+
+.weather-hour > strong {
+  font-size: 24px;
+}
