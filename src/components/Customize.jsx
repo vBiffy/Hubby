@@ -11,6 +11,7 @@ const sections = [
 
 // Render one settings section at a time; persistence remains with the app shell.
 export function Customize({
+  initialSection = 'display',
   settings,
   onChange,
   onReset,
@@ -19,7 +20,9 @@ export function Customize({
   onDeleteMember,
   repository,
 }) {
-  const [section, setSection] = useState('display');
+  const [section, setSection] = useState(
+    sections.some(([key]) => key === initialSection) ? initialSection : 'display',
+  );
   const id = useId();
   return (
     <div className="customize">

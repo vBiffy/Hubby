@@ -20,7 +20,15 @@ export function dayKey(date) {
   return `${year}-${month}-${day}`;
 }
 
-export function Calendar({ items, weekStart, onSelect, onEdit, onMove, members = [] }) {
+export function Calendar({
+  items,
+  weekStart,
+  onSelect,
+  onEdit,
+  onMove,
+  members = [],
+  readOnly = false,
+}) {
   const [dragged, setDragged] = useState(null);
   const [drag] = useState(createCalendarDrag);
   const [dropDay, setDropDay] = useState(null);
@@ -49,7 +57,7 @@ export function Calendar({ items, weekStart, onSelect, onEdit, onMove, members =
   function selectDay(day) {
     if (Date.now() < touch.current.suppressUntil) return;
     if (drag.current()) drop(day);
-    else onSelect(day);
+    else onSelect?.(day);
   }
   const [view, setView] = useState('month');
   const [family, setFamily] = useState('all');
@@ -102,7 +110,7 @@ export function Calendar({ items, weekStart, onSelect, onEdit, onMove, members =
     >
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">THE FAMILY PLAN</p>
+          <p className="eyebrow">{readOnly ? 'THE SPORTS PLAN' : 'THE FAMILY PLAN'}</p>
           <h2>
             {month.toLocaleDateString(undefined, {
               month: 'long',
@@ -354,7 +362,11 @@ export function Calendar({ items, weekStart, onSelect, onEdit, onMove, members =
           without an end time use full width.
         </p>
       )}
-      <p className="hint">Touch a date to add a plan, or an entry to edit it.</p>
+      <p className="hint">
+        {readOnly
+          ? 'Tap a game to view its details.'
+          : 'Touch a date to add a plan, or an entry to edit it.'}
+      </p>
       {onMove && (
         <p className="hint">
           Drag entries to another day; on touchscreens, press and hold before dragging. Time stays

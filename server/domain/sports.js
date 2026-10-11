@@ -40,6 +40,11 @@ export function createSports(provider, now = () => Date.now()) {
   }
   return {
     teams,
+    async conferences(id) {
+      const league = leagueFor(id);
+      if (!['ncaaf', 'ncaam'].includes(id)) throw new ValidationError('Choose a college league.');
+      return load(`conferences:${id}`, 6 * 60 * 60000, () => provider.conferences(league, now()));
+    },
     async games(id, favorites = []) {
       const league = leagueFor(id);
       if (

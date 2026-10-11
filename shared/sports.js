@@ -84,3 +84,23 @@ export function sortUpcoming(games, favorites) {
       Date.parse(a.startsAt) - Date.parse(b.startsAt),
   );
 }
+
+// Include cross-conference matchups when either participant belongs to the filter.
+export function conferenceGames(games, conference) {
+  if (!conference) return games;
+  const ids = new Set(conference.teamIds);
+  return games.filter((game) => game.teams.some((team) => ids.has(team.id)));
+}
+
+// Use poll membership rather than badges: completed games intentionally omit
+// current-rank badges, but still belong in the selected Top 25 game list.
+export function filterSportsGames(games, filter, poll, now) {
+  if (filter !== 'top25') return conferenceGames(games, filter);
+  if (!currentApPoll(poll, now)) return [];
+  const ids = new Set(
+    (poll.teams || [])
+      .filter((team) => Number.isInteger(team.rank) && team.rank >= 1 && team.rank <= 25)
+      .map((team) => team.id),
+  );
+  return games.filter((game) => game.teams.some((team) => ids.has(team.id)));
+}

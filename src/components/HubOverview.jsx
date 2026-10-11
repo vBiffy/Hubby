@@ -1,5 +1,14 @@
-import { useState } from 'react';
-import { dateKey, occurrences, occursOnDay, planStyle } from '../../shared/calendar.js';
+import { QuickReminders } from './QuickReminders.jsx';
+import { SportsCalendarDialog } from './SportsCalendar.jsx';
+import { HubNotes } from './HubNotes.jsx';
+import { useRef, useState } from 'react';
+import {
+  dateKey,
+  occurrences,
+  occursOnDay,
+  planStyle,
+  assignedMemberIds,
+} from '../../shared/calendar.js';
 
 const timeLabel = (item) =>
   item.sportsTimeTbd
@@ -13,7 +22,25 @@ const timeLabel = (item) =>
         });
 
 // The hub is a glanceable overview. Full lists and editing stay in their feature screens.
-export function HubOverview({ items, notes, members, showAgenda, showNotes, onOpenEvent, now }) {
+export function HubOverview({
+  items,
+  notes,
+  members,
+  showAgenda,
+  showNotes,
+  onOpenEvent,
+  now,
+  onSaveNote,
+  onDeleteNote,
+  sportsItems = [],
+  sportsError,
+  weekStart = 0,
+  repository,
+}) {
+  const [sportsOpen, setSportsOpen] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
+  const [person, setPerson] = useState('everyone');
+  const track = useRef(null);
   const [picked, setPicked] = useState(null);
   const today = dateKey(now);
   const days = Array.from({ length: 7 }, (_, index) => {
@@ -24,19 +51,23 @@ export function HubOverview({ items, notes, members, showAgenda, showNotes, onOp
   });
   const through = new Date(days[6]);
   through.setHours(23, 59, 59, 999);
-  const entries = occurrences(items, days[0], through).filter((item) => !item.done);
+  const entries = occurrences(
+    items.filter((item) => !item.sportsSource),
+    days[0],
+    through,
+  ).filter((item) => !item.done);
   const selected = days.some((day) => dateKey(day) === picked) ? picked : today;
-  // Dots and agenda must describe the same collection, including enabled sports games.
+  // Day dots and cards describe household plans only.
   const plans = entries.filter((item) => occursOnDay(item, selected));
-  const nextGame = items
-    .filter(
-      (item) =>
-        item.sportsSource &&
-        !occursOnDay(item, selected) &&
-        (Date.parse(item.startsAt) >= now.getTime() ||
-          (item.sportsTimeTbd && dateKey(new Date(item.startsAt)) >= today)),
-    )
-    .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt))[0];
+  const people = [{ id: 'everyone', title: 'Everyone', color: null }, ...members];
+  const selectedPerson = members.some((member) => member.id === person) ? person : 'everyone';
+  const visiblePeople = members.filter(
+    (member) => selectedPerson === 'everyone' || member.id === selectedPerson,
+  );
+  function choosePerson(id) {
+    setPerson(id);
+    track.current?.scrollTo({ left: 0 });
+  }
   return (
     <div className="hub-overview">
       <section className="panel hub-week">
@@ -72,104 +103,151 @@ export function HubOverview({ items, notes, members, showAgenda, showNotes, onOp
           })}
         </div>
       </section>
-      <div className="hub-cards">
-        {showAgenda && (
-          <section className="panel hub-plans">
-            <div className="panel-heading">
-              <div>
-                <h2>
-                  {selected === today
-                    ? 'Today’s plans'
-                    : new Date(`${selected}T12:00:00`).toLocaleDateString(undefined, {
-                        weekday: 'long',
-                      })}
-                </h2>
-                <p className="hub-day-summary">
-                  {plans.length
-                    ? `${plans.length} ${plans.length === 1 ? 'plan' : 'plans'} for the day`
-                    : 'Your day at a glance'}
-                </p>
-              </div>
+      {showAgenda && (
+        <section className="panel hub-plans">
+          <div className="panel-heading">
+            <div>
+              <h2>
+                {selected === today
+                  ? "Today's plans"
+                  : new Date(`${selected}T12:00:00`).toLocaleDateString(undefined, {
+                      weekday: 'long',
+                    })}
+              </h2>
+              <p className="hub-day-summary">
+                {plans.length
+                  ? `${plans.length} ${plans.length === 1 ? 'plan' : 'plans'} for the day`
+                  : 'Your day at a glance'}
+              </p>
+            </div>
+            <div className="actions">
+              {repository && <QuickReminders repository={repository} />}
+              <button onClick={() => setSportsOpen(true)}>Sports calendar</button>
+              {showNotes && (
+                <button onClick={() => setNotesOpen(true)}>Notes ({notes.length})</button>
+              )}
               <a href="#calendar">Full calendar</a>
             </div>
-            <div
-              className="hub-plan-list"
-              tabIndex={0}
-              role="region"
-              aria-label="Selected day's plans"
-            >
-              {plans.map((item) => (
-                <button
-                  className="hub-plan"
-                  key={item.occurrenceKey}
-                  onClick={() => onOpenEvent(item)}
+          </div>
+          <div className="hub-family-picker" role="group" aria-label="Choose whose plans to view">
+            {people.map((member) => (
+              <button
+                key={member.id}
+                aria-pressed={selectedPerson === member.id}
+                onClick={() => choosePerson(member.id)}
+              >
+                <span
+                  className="hub-member-avatar"
+                  style={
+                    member.color
+                      ? {
+                          backgroundColor: member.color,
+                          ...planStyle({ memberIds: [member.id] }, members),
+                        }
+                      : {}
+                  }
+                  aria-hidden="true"
                 >
-                  <span className="hub-plan-color" style={planStyle(item, members)} />
-                  <span>
-                    <strong>{item.title}</strong>
-                    <small>
-                      {timeLabel(item)}
-                      {item.sportsSource
-                        ? ' · Sports'
-                        : item.type === 'reminder'
-                          ? ' · Reminder'
-                          : ''}
-                    </small>
-                  </span>
-                </button>
-              ))}
-              {!plans.length && (
-                <p className="empty">
-                  Nothing on the calendar for this day. Choose another day above or add a plan.
-                </p>
-              )}
-            </div>
-          </section>
-        )}
-        <div className="hub-side-cards">
-          <section className="panel hub-sports">
-            <div className="panel-heading">
-              <h2>Next game</h2>
-              <a href="#sports">Sports</a>
-            </div>
-            {nextGame ? (
-              <button className="hub-plan" onClick={() => onOpenEvent(nextGame)}>
-                <span className="hub-plan-color" style={planStyle(nextGame, members)} />
-                <span>
-                  <strong>{nextGame.title}</strong>
-                  <small>
-                    {new Date(nextGame.startsAt).toLocaleDateString(undefined, {
-                      month: 'short',
-                      day: 'numeric',
-                    })}
-                    {' · '}
-                    {timeLabel(nextGame)}
-                  </small>
+                  {member.id === 'everyone' ? 'All' : member.title.slice(0, 1).toUpperCase()}
                 </span>
+                {member.title}
               </button>
-            ) : (
-              <p className="empty">
-                Games for this day appear in your plans. Open Sports for schedules and scores.
-              </p>
-            )}
-          </section>
-          {showNotes && (
-            <section className="panel hub-notes">
-              <div className="panel-heading">
-                <h2>Notes</h2>
-                <a href="#notes">Open notebook</a>
-              </div>
-              {notes.slice(0, 2).map((note) => (
-                <a className="hub-note-preview" key={note.id} href="#notes">
-                  <strong>{note.title}</strong>
-                  <small>{note.body || 'No text yet.'}</small>
-                </a>
-              ))}
-              {!notes.length && <p className="empty">Your family notebook is ready.</p>}
-            </section>
-          )}
-        </div>
-      </div>
+            ))}
+          </div>
+          <div
+            className="hub-family-track"
+            ref={track}
+            tabIndex={0}
+            role="region"
+            aria-label="Daily family plans; swipe left or right"
+          >
+            {visiblePeople.map((member) => {
+              // Whole-household plans belong in each person's day. Multi-person
+              // plans appear for each assigned member; Everyone shows every plan once.
+              const personal = plans.filter(
+                (item) =>
+                  member.id === 'everyone' ||
+                  !assignedMemberIds(item).length ||
+                  assignedMemberIds(item).includes(member.id),
+              );
+              return (
+                <section
+                  className="hub-person-day"
+                  key={member.id}
+
+                  aria-label={`${member.title}'s daily plans`}
+                >
+                  <div className="hub-person-heading">
+                    <span
+                      className="hub-member-avatar"
+                      aria-hidden="true"
+                      style={member.color ? planStyle({ memberIds: [member.id] }, members) : {}}
+                    >
+                      {member.id === 'everyone' ? 'All' : member.title.slice(0, 1).toUpperCase()}
+                    </span>
+                    <h3>{member.title}</h3>
+                    <span className="hint">
+                      {personal.length} {personal.length === 1 ? 'plan' : 'plans'}
+                    </span>
+                  </div>
+                  <div
+                    className="hub-plan-list"
+                    tabIndex={0}
+                    role="region"
+                    aria-label={`${member.title}'s plans`}
+                  >
+                    {personal.map((item) => (
+                      <button
+                        className="hub-plan"
+                        key={item.occurrenceKey}
+                        onClick={() => onOpenEvent(item)}
+                      >
+                        <span className="hub-plan-color" style={planStyle(item, members)} />
+                        <span>
+                          <strong>{item.title}</strong>
+                          <small>
+                            {timeLabel(item)}
+                            {item.sportsSource
+                              ? ' - Sports'
+                              : item.type === 'reminder'
+                                ? ' - Reminder'
+                                : ''}
+                          </small>
+                        </span>
+                      </button>
+                    ))}
+                    {!personal.length && <p className="empty">Nothing planned for this day.</p>}
+                  </div>
+                </section>
+              );
+            })}
+          </div>
+          <p className="hint hub-swipe-hint">
+            Swipe to see each person's day, or tap a name above.
+          </p>
+        </section>
+      )}
+      {!showAgenda && repository && <QuickReminders repository={repository} />}
+      {!showAgenda && showNotes && (
+        <button onClick={() => setNotesOpen(true)}>Open notes ({notes.length})</button>
+      )}
+      {sportsOpen && (
+        <SportsCalendarDialog
+          items={sportsItems}
+          error={sportsError}
+          weekStart={weekStart}
+          onClose={() => setSportsOpen(false)}
+        />
+      )}
+      {!showAgenda && <button onClick={() => setSportsOpen(true)}>Sports calendar</button>}
+      {notesOpen && (
+        <HubNotes
+          items={notes}
+          onSave={onSaveNote}
+          onDelete={onDeleteNote}
+          onClose={() => setNotesOpen(false)}
+        />
+      )}
     </div>
   );
 }

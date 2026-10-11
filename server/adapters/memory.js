@@ -2,7 +2,13 @@ import { ValidationError } from '../domain/hub.js';
 
 // Explicit development/test adapter. Data is lost when the process exits.
 export function createMemoryRepository() {
-  const data = { notes: new Map(), events: new Map(), groceries: new Map(), members: new Map() };
+  const data = {
+    notes: new Map(),
+    events: new Map(),
+    groceries: new Map(),
+    members: new Map(),
+    quickReminders: new Map(),
+  };
   return {
     async list(kind) {
       return [...data[kind].values()].map((item) => structuredClone(item));

@@ -191,6 +191,11 @@ test('calendar, editor and reminder popup render without crashing', async () => 
     assert.match(sports, /FBS College Football/);
     assert.match(sports, /English Premier League/);
     assert.match(sports, /WNBA/);
+    assert.match(sports, /sports-controls/);
+    assert.match(sports, /sports-header-actions[\s\S]*Favorites[\s\S]*(Refresh|Updating)/);
+    assert.match(sports, /Game filter/);
+    assert.match(sports, /AP Top 25/);
+    assert.doesNotMatch(sports, /Filter by conference|sports-leagues/);
     assert.doesNotMatch(sports, />NBA</);
     assert.doesNotMatch(sports, /MLB/);
     const teams = renderToStaticMarkup(
@@ -213,6 +218,17 @@ test('calendar, editor and reminder popup render without crashing', async () => 
     assert.match(customize, /role="tablist"/);
     assert.match(customize, /Your hub, your way/);
     assert.doesNotMatch(customize, /Your teams/);
+    const favoriteSettings = renderToStaticMarkup(
+      React.createElement(Customize, {
+        initialSection: 'sports',
+        settings: {},
+        repository: {},
+        onChange() {},
+      }),
+    );
+    assert.match(favoriteSettings, /Your teams/);
+    assert.doesNotMatch(favoriteSettings, /Your hub, your way/);
+
     const { HubOverview } = await vite.ssrLoadModule('/src/components/HubOverview.jsx');
     const hub = renderToStaticMarkup(
       React.createElement(HubOverview, {
@@ -229,10 +245,91 @@ test('calendar, editor and reminder popup render without crashing', async () => 
       }),
     );
     assert.match(hub, /Your week/);
-    assert.match(hub, /Today’s plans/);
-    assert.match(hub, /Next game/);
-    assert.match(hub, /Remember milk/);
+    assert.match(hub, /Today&#x27;s plans/);
+    assert.doesNotMatch(hub, /Next game/);
+    assert.match(hub, /hub-family-track/);
+    assert.doesNotMatch(hub, /Remember milk/);
+    assert.match(hub, /Notes \(1\)/);
     assert.doesNotMatch(hub, /calendar-grid/);
+    const familyHub = renderToStaticMarkup(
+      React.createElement(HubOverview, {
+        items: [
+          {
+            ...items[0],
+            title: 'Dad meeting',
+            memberIds: ['dad'],
+            startsAt: '2026-10-09T12:00:00',
+          },
+          {
+            ...items[1],
+            title: 'Mom appointment',
+            memberIds: ['mom'],
+            startsAt: '2026-10-09T13:00:00',
+          },
+          { ...items[2], title: 'Family dinner', memberIds: [], startsAt: '2026-10-09T18:00:00' },
+        ],
+        notes: [],
+        members: [
+          { id: 'dad', title: 'Dad', color: '#326d9c' },
+          { id: 'mom', title: 'Mom', color: '#a64b78' },
+        ],
+        showAgenda: true,
+        showNotes: true,
+        onOpenEvent() {},
+        now: new Date('2026-10-09T09:00:00'),
+      }),
+    );
+    assert.doesNotMatch(familyHub, /aria-label="Everyone&#x27;s daily plans"/);
+    assert.match(familyHub, />Everyone<\/button>/);
+    const { QuickReminders } = await vite.ssrLoadModule('/src/components/QuickReminders.jsx');
+    const quickButton = renderToStaticMarkup(
+      React.createElement(QuickReminders, { repository: {} }),
+    );
+    assert.match(quickButton, /Quick reminders/);
+    const dadCard = familyHub.match(
+      /<section class="hub-person-day" aria-label="Dad[^]*?<\/section>/,
+    )[0];
+    assert.match(dadCard, /Dad meeting/);
+    assert.match(dadCard, /Family dinner/);
+    assert.doesNotMatch(dadCard, /Mom appointment/);
+    const { HubNotes } = await vite.ssrLoadModule('/src/components/HubNotes.jsx');
+    const notesPopup = renderToStaticMarkup(
+      React.createElement(HubNotes, {
+        items: [{ id: 'note', title: 'Shopping', body: 'Remember milk' }],
+        onSave() {},
+        onDelete() {},
+        onClose() {},
+      }),
+    );
+    assert.match(notesPopup, /<dialog/);
+    assert.match(notesPopup, /Remember milk/);
+    assert.match(notesPopup, /Open notebook/);
+    const { SportsCalendar, SportsCalendarDialog } = await vite.ssrLoadModule(
+      '/src/components/SportsCalendar.jsx',
+    );
+    const sportsCalendarProps = {
+      items: [
+        {
+          ...items[0],
+          title: 'Favorite team match',
+          sportsSource: 'ESPN',
+          sportsColors: ['#cc2233'],
+          repeat: 'none',
+        },
+      ],
+      weekStart: 0,
+    };
+    const separateCalendar = renderToStaticMarkup(
+      React.createElement(SportsCalendar, sportsCalendarProps),
+    );
+    assert.match(separateCalendar, /THE SPORTS PLAN/);
+    assert.match(separateCalendar, /Favorite team match/);
+    assert.doesNotMatch(separateCalendar, /Touch a date to add a plan/);
+    const calendarPopup = renderToStaticMarkup(
+      React.createElement(SportsCalendarDialog, { ...sportsCalendarProps, onClose() {} }),
+    );
+    assert.match(calendarPopup, /<dialog/);
+    assert.match(calendarPopup, /Sports calendar/);
     const saturday = renderToStaticMarkup(
       React.createElement(HubOverview, {
         items: Array.from({ length: 4 }, (_, index) => ({
@@ -250,8 +347,9 @@ test('calendar, editor and reminder popup render without crashing', async () => 
         now: new Date('2026-10-10T09:00:00'),
       }),
     );
-    assert.match(saturday, /4 plans for the day/);
-    assert.match(saturday, /Saturday game 3/);
+    assert.doesNotMatch(saturday, /4 plans for the day/);
+    assert.doesNotMatch(saturday, /Saturday game 3/);
+    assert.match(saturday, /Sports calendar/);
     assert.doesNotMatch(saturday, /Nothing on the calendar for this day/);
   } finally {
     await vite.close();

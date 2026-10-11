@@ -18,7 +18,15 @@ function errorStatus(error) {
 }
 
 // Inbound adapter: translate HTTP requests into application use cases.
-export function createApp(hub, storage, health = async () => {}, weather, sports, groceryText) {
+export function createApp(
+  hub,
+  storage,
+  health = async () => {},
+  weather,
+  sports,
+  groceryText,
+  quickReminders,
+) {
   const app = express();
   app.disable('x-powered-by');
   app.use(express.json({ limit: '64kb' }));
@@ -34,14 +42,18 @@ export function createApp(hub, storage, health = async () => {}, weather, sports
   app.get('/api/sports/:league/:resource', async (req, res) => {
     if (!sports) throw new SportsUnavailableError('Sports is not configured.');
     const { league, resource } = req.params;
-    if (!['teams', 'games'].includes(resource))
+    if (!['teams', 'games', 'conferences'].includes(resource))
       throw new ValidationError('Unknown sports resource.');
     const favorites =
       typeof req.query.favorites === 'string' ? req.query.favorites.split(',').filter(Boolean) : [];
     res
       .set('Cache-Control', 'no-store')
       .json(
-        resource === 'teams' ? await sports.teams(league) : await sports.games(league, favorites),
+        resource === 'teams'
+          ? await sports.teams(league)
+          : resource === 'conferences'
+            ? await sports.conferences(league)
+            : await sports.games(league, favorites),
       );
   });
   app.get('/api/groceries/text/configuration', (req, res) => {
@@ -55,6 +67,19 @@ export function createApp(hub, storage, health = async () => {}, weather, sports
       .set('Cache-Control', 'no-store')
       .status(202)
       .json(await groceryText.send());
+  });
+  app.get('/api/quick-reminders', async (req, res) => {
+    if (!quickReminders) throw new ValidationError('Quick reminders are not configured.');
+    res.set('Cache-Control', 'no-store').json(await quickReminders.list());
+  });
+  app.post('/api/quick-reminders', async (req, res) => {
+    if (!quickReminders) throw new ValidationError('Quick reminders are not configured.');
+    res.status(201).json(await quickReminders.create(req.body));
+  });
+  app.delete('/api/quick-reminders/:id', async (req, res) => {
+    if (!quickReminders) throw new ValidationError('Quick reminders are not configured.');
+    await quickReminders.cancel(req.params.id);
+    res.sendStatus(204);
   });
   app.get('/api/:kind', async (req, res) => res.json(await hub.list(req.params.kind)));
   app.post('/api/events/:id/restore', async (req, res) =>

@@ -171,18 +171,19 @@ are undocumented and may change; failures are labeled and can be retried.
 Customize separates Display, Family, and Sports into subtabs so only the selected
 settings section is shown.
 
-Under Customize → Sports, each favorite has a **Show games on calendar** checkbox,
-off by default. Enabled teams' games appear as synced ESPN calendar entries with
+Under Customize → Sports, each favorite has a **Show games on sports calendar** checkbox,
+off by default. Enabled teams' games appear in the separate Sports calendar as synced ESPN entries with
 no reminders and their primary team colors. If both teams are enabled, a single
 entry shows both colors diagonally. These source-managed entries refresh every
 five minutes and are not copied into PostgreSQL. Disable the toggle or remove
 the favorite to hide them; household calendar events remain editable as usual.
 
-College football and men's basketball offer an AP Top 25 view with the poll date
-and rank changes. Current AP ranks appear beside teams in upcoming/live games and
-synced calendar titles. Polls older than two weeks remain viewable but do not add
-badges; completed games do not receive current rankings. Coaches/CFP polls are
-never substituted. AP data refreshes hourly and a poll failure does not hide games.
+College football and men's basketball offer an **AP Top 25** game filter. It shows
+matchups involving either team in the current AP poll, including live/recent scores.
+Current AP ranks appear beside teams in upcoming/live games and synced calendar
+titles. Completed games omit current-rank badges. Polls older than two weeks are
+not used; Coaches/CFP polls are never substituted. If no current AP poll is available,
+choose All games or a conference instead. AP data refreshes hourly.
 
 ### Shared controls and first-time family setup
 
@@ -239,3 +240,74 @@ The chat-ID setup helper contacts Telegram only when you run it manually.
 Provider references: [Bot setup](https://core.telegram.org/bots/features#botfather),
 [sendMessage](https://core.telegram.org/bots/api#sendmessage),
 [getUpdates](https://core.telegram.org/bots/api#getupdates).
+
+### Hub family day cards
+
+The Hub shows a week picker and full-width daily plans. Tap a family member's
+name/colored initial. Everyone is a filter showing all member cards; selecting a
+name shows only that person's card. Swipe horizontally across the member cards.
+Whole-household plans appear in every person's day; assigned plans appear only
+for their members. There is no duplicate Everyone card. Sports games are excluded. Cards scroll vertically for busy days and keep a consistent 320px width.
+Wider screens reveal more cards; very narrow windows leave a small peek of the next card.
+
+Notes is a button that opens a smaller themed popup with note creation, editing,
+and deletion. The standalone Notes tab remains available. The Next game card has
+been removed from the Hub. The default hub name is Our hub; existing custom names
+are preserved, and the old default Our kitchen is updated automatically.
+
+### Separate sports calendar and expanded Hub
+
+ESPN games appear only in the **Sports ? Sports calendar** view. The main Calendar,
+Hub week dots, daily family cards, and household agenda contain household plans only.
+Existing favorite-team calendar toggles now control this sports-only calendar;
+no data migration or duplicate stored events are needed.
+
+Use the **Sports calendar** button on the Hub to open the same read-only calendar
+in a themed popup. Tap a game for details; games cannot be edited, moved, or deleted.
+Manage inclusion through Customize ? Sports. The Hub uses all available width on desktop displays; day cards have a moderate height and scroll internally when busy.
+Small/short windows retain natural page scrolling.
+
+For a compact landscape touchscreen preview, resize the browser to approximately
+1024 ? 768 or 1280 ? 800. On Hub windows up to 1400px wide, the sidebar becomes
+slimmer to leave more room for two family cards and the next card's edge.
+Cards stay 320px wide and 240?360px tall rather than stretching down the screen.
+
+### Quick household reminders and timers
+
+In the Hub plans toolbar, beside Sports calendar and Notes, choose **Quick reminders**. Laundry (60 minutes), dryer (45), dishwasher
+(120), oven check (20), and plants (30) presets immediately start a Telegram reminder when tapped. All use the same bot
+and `TELEGRAM_CHAT_ID` as grocery messages. No separate recipient is needed.
+Use the custom form to edit a message and duration (1?1,440 minutes) or start
+an on-screen timer. Presets estimate time; they cannot detect appliance completion.
+
+Timers display their completion by reopening the popup while the Hub stays open;
+there is no audible alarm. Active countdowns can be cancelled, and recent outcomes
+are shown in the popup. Telegram delivery does not require the browser or popup
+open, but the API/Pi must keep running with internet access.
+
+**Existing PostgreSQL installs:** run `npm.cmd run db:migrate` once before using
+quick reminders; this adds the `quickReminders` record kind while preserving data.
+Memory mode requires no migration but loses timers on API restart.
+
+The server checks local stored deadlines every five seconds, not Telegram updates.
+PostgreSQL reminders survive restarts and overdue scheduled reminders are handled
+on startup. Use one API process. A message is claimed before delivery; failed or
+ambiguous sends are not retried automatically. After a crash during delivery,
+Sending may mean uncertain delivery: check Telegram before creating a replacement.
+Recent completed/cancelled/failed records are cleaned up after seven days.
+
+### Sports controls and college filters
+
+The Sports toolbar uses themed dropdowns for **View**, **League**, and **Game filter**,
+with a horizontally scrollable day picker below the filters. View switches between
+Games & scores and the separate Sports calendar.
+
+For college football and men's basketball, Game filter offers **All games**,
+**AP Top 25**, and individual conferences. Conference filters include matchups
+involving either participant, including cross-conference games. Both upcoming games
+and scores follow the filter, and the day picker only lists matching dates plus Today.
+Changing leagues resets the game filter and day selection.
+
+Conference membership comes from ESPN and is cached for six hours. Basketball uses
+complete upcoming-season conference directories rather than the previous season's
+standings. A failed conference lookup leaves All games and AP Top 25 available.

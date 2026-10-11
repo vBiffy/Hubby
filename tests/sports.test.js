@@ -1,3 +1,5 @@
+import { normalizeConferences } from '../server/adapters/espn.js';
+import { conferenceGames, filterSportsGames } from '../shared/sports.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createEspn, normalizeGame, normalizeApPoll } from '../server/adapters/espn.js';
@@ -295,4 +297,73 @@ test('sports HTTP routes are isolated from stored modules and report provider fa
   assert.equal((await fetch(`${base}/sports/nfl/games`)).status, 503);
   assert.equal((await fetch(`${base}/sports/nfl/unknown`)).status, 400);
   assert.equal((await fetch(`${base}/notes`)).status, 200);
+});
+
+test('conference normalization includes divisions and filtering includes either participant', () => {
+  const groups = normalizeConferences({
+    children: [
+      { id: '5', name: 'Big Ten', standings: { entries: [{ team: { id: '1' } }] } },
+      {
+        id: '37',
+        name: 'Sun Belt',
+        children: [
+          { standings: { entries: [{ team: { id: '2' } }] } },
+          { standings: { entries: [{ team: { id: '3' } }] } },
+        ],
+      },
+    ],
+  });
+  assert.deepEqual(groups[1].teamIds, ['2', '3']);
+  const games = [
+    { id: 'cross', teams: [{ id: '1' }, { id: '9' }] },
+    { id: 'other', teams: [{ id: '2' }, { id: '3' }] },
+  ];
+  assert.deepEqual(
+    conferenceGames(games, groups[0]).map((item) => item.id),
+    ['cross'],
+  );
+  assert.equal(conferenceGames(games, null), games);
+});
+
+test('basketball conference membership uses complete upcoming-season core directories', async () => {
+  const urls = [];
+  const provider = createEspn(async (url) => {
+    urls.push(String(url));
+    let data;
+    if (url.includes('/children?')) data = { count: 1, items: [{ $ref: 'https://core/groups/7' }] };
+    else if (url.includes('/teams?'))
+      data = { count: 1, items: [{ $ref: 'https://core/teams/130' }] };
+    else data = { name: 'Big Ten Conference' };
+    return { ok: true, json: async () => data };
+  });
+  const groups = await provider.conferences(
+    sportsLeagues.find((item) => item.id === 'ncaam'),
+    Date.parse('2026-10-10T12:00Z'),
+  );
+  assert.deepEqual(groups, [{ id: '7', name: 'Big Ten Conference', teamIds: ['130'] }]);
+  assert.ok(urls.every((url) => url.includes('/seasons/2027/')));
+});
+
+test('Top 25 filters either team, including finals without badges, using a current AP poll', () => {
+  const now = Date.parse('2026-10-10T12:00Z');
+  const poll = {
+    publishedAt: '2026-10-04T12:00Z',
+    teams: [
+      { id: 'ranked', rank: 7 },
+      { id: 'outside', rank: 26 },
+    ],
+  };
+  const games = [
+    { id: 'upcoming', state: 'pre', teams: [{ id: 'other' }, { id: 'ranked' }] },
+    { id: 'final', state: 'post', teams: [{ id: 'ranked', apRank: null }] },
+    { id: 'unranked', teams: [{ id: 'outside' }, { id: 'other' }] },
+  ];
+  assert.deepEqual(
+    filterSportsGames(games, 'top25', poll, now).map((game) => game.id),
+    ['upcoming', 'final'],
+  );
+  assert.deepEqual(filterSportsGames(games, 'top25', null, now), []);
+  assert.deepEqual(filterSportsGames(games, 'top25', poll, now + 20 * 86400000), []);
+  assert.equal(filterSportsGames(games, null, poll, now), games);
+  assert.deepEqual(filterSportsGames(games, { teamIds: ['outside'] }, poll, now), [games[2]]);
 });

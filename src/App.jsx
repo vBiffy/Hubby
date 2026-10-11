@@ -40,7 +40,7 @@ const pageTitles = {
 };
 
 const defaults = {
-  name: 'Our kitchen',
+  name: 'Our hub',
   accent: '#264e42',
   dark: false,
   large: false,
@@ -52,7 +52,12 @@ const defaults = {
 };
 function readSettings() {
   try {
-    return { ...defaults, ...JSON.parse(localStorage.getItem('hubby.settings') || '{}') };
+    const saved = JSON.parse(localStorage.getItem('hubby.settings') || '{}');
+    return {
+      ...defaults,
+      ...saved,
+      name: saved.name === 'Our kitchen' ? 'Our hub' : saved.name || defaults.name,
+    };
   } catch {
     return defaults;
   }
@@ -62,7 +67,7 @@ function readSettings() {
 // own data/actions. Hash navigation also supports direct #notes/#calendar links.
 export function App({ repository }) {
   const weatherProps = useWeather(repository);
-  const [tab, setTab] = useState(location.hash.slice(1) || 'home');
+  const [tab, setTab] = useState(location.hash.slice(1).split('?')[0] || 'home');
   const [settings, setSettings] = useState(readSettings);
   // Calendar inclusion is opt-in and independent of favorite sorting in Sports.
   const calendarTeams = Object.fromEntries(
@@ -75,7 +80,7 @@ export function App({ repository }) {
   const [data, setData] = useState({ notes: [], events: [], groceries: [], members: [] });
   const [loaded, setLoaded] = useState(false);
   const [settingUp, setSettingUp] = useState(false);
-  const calendarEvents = [...data.events, ...sportsCalendar.events];
+  const calendarEvents = data.events.filter((item) => !item.sportsSource);
   const reminderProps = useReminders(data.events);
   const [status, setStatus] = useState('Connecting…');
   const [error, setError] = useState('');
@@ -114,7 +119,7 @@ export function App({ repository }) {
   const [busy, setBusy] = useState(false);
   const [clock, setClock] = useState(new Date());
   useEffect(() => {
-    const listener = () => setTab(location.hash.slice(1) || 'home');
+    const listener = () => setTab(location.hash.slice(1).split('?')[0] || 'home');
     window.addEventListener('hashchange', listener);
     return () => window.removeEventListener('hashchange', listener);
   }, []);
@@ -338,7 +343,7 @@ export function App({ repository }) {
         <p className="eyebrow">A LITTLE MORE TOGETHER</p>
         <nav>
           {[
-            ['home', '⌂', 'Kitchen hub'],
+            ['home', '⌂', 'Hub'],
             ['calendar', '▦', 'Calendar'],
             ['notes', '≡', 'Notes'],
             ['groceries', '\u2637', 'Groceries'],
@@ -388,15 +393,16 @@ export function App({ repository }) {
             {error}
           </p>
         )}
-        {['home', 'calendar'].includes(tab) && sportsCalendar.error && (
-          <p role="status" className="hint">
-            {sportsCalendar.error}
-          </p>
-        )}
         {tab === 'home' && (
           <HubOverview
+            repository={repository}
             items={calendarEvents}
+            sportsItems={sportsCalendar.events}
+            sportsError={sportsCalendar.error}
+            weekStart={Number(settings.weekStart)}
             notes={data.notes}
+            onSaveNote={notesProps.onSave}
+            onDeleteNote={notesProps.onDelete}
             members={data.members}
             showAgenda={settings.agenda}
             showNotes={settings.notes}
@@ -419,7 +425,13 @@ export function App({ repository }) {
         )}
         {tab === 'weather' && <Weather {...weatherProps} />}
         {tab === 'sports' && (
-          <Sports repository={repository} favorites={settings.sportsFavorites} />
+          <Sports
+            repository={repository}
+            favorites={settings.sportsFavorites}
+            calendarItems={sportsCalendar.events}
+            calendarError={sportsCalendar.error}
+            weekStart={Number(settings.weekStart)}
+          />
         )}
         {tab === 'notes' && <Notes {...notesProps} />}
         {tab === 'groceries' && (
@@ -432,6 +444,7 @@ export function App({ repository }) {
         )}
         {tab === 'settings' && (
           <Customize
+            initialSection={new URLSearchParams(location.hash.split('?')[1]).get('section')}
             settings={settings}
             onChange={setSettings}
             onReset={() => setSettings(defaults)}

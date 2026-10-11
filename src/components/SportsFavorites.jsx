@@ -90,7 +90,7 @@ export function SportsFavorites({
                       onCalendarChange({ ...calendarTeams, [league]: next });
                     }}
                   />
-                  Show {team.name} games on calendar
+                  Show {team.name} games on sports calendar
                 </label>
               )}
             </div>
