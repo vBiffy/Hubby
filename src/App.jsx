@@ -424,6 +424,7 @@ export function App({ repository }) {
         {tab === 'notes' && <Notes {...notesProps} />}
         {tab === 'groceries' && (
           <Groceries
+            repository={repository}
             items={data.groceries}
             onSave={(item) => save('groceries', item)}
             onDelete={(id) => remove('groceries', id)}

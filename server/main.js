@@ -1,3 +1,5 @@
+import { createGroceryText } from './domain/groceryText.js';
+import { createTelegram } from './adapters/telegram.js';
 import pg from 'pg';
 import { createHub } from './domain/hub.js';
 import { createMemoryRepository } from './adapters/memory.js';
@@ -19,22 +21,25 @@ const pool =
 if (pool) await pool.query('SELECT 1 FROM hub_items LIMIT 1');
 else console.warn('Memory demo: changes will be lost on restart.');
 const repo = pool ? createPostgresRepository(pool) : createMemoryRepository();
+const hub = createHub(repo);
+const telegram = createTelegram();
 const weather = createWeather(createOpenMeteo());
 const server = createApp(
-  createHub(repo),
+  hub,
   storage,
   async () => {
     if (pool) await pool.query('SELECT 1');
   },
   weather,
   createSports(createEspn()),
+  createGroceryText(hub, telegram),
 ).listen(process.env.PORT || 3001, process.env.HOST || '127.0.0.1', () =>
   console.log('Hubby API ready on port', process.env.PORT || 3001),
 );
 for (const signal of ['SIGINT', 'SIGTERM'])
-  process.on(signal, () =>
+  process.on(signal, () => {
     server.close(async () => {
       await pool?.end();
       process.exit(0);
-    }),
-  );
+    });
+  });

@@ -196,3 +196,46 @@ Add at least one member with a unique color, then choose **Continue to kitchen**
 The testing shortcut saves **Mom**, **Dad**, and **Kid** through the normal member API.
 Removing the last member brings setup back. Failed initial connections offer retry;
 they do not assume the family is empty. Memory-mode demo members reset on server restart.
+
+### Send your grocery list to Telegram
+
+Telegram replaces the paid SMS integration. Install Telegram on your phone;
+no custom iOS app, SMS sender number, or paid broadcasting is needed.
+The Groceries tab sends unchecked items and quantities to one fixed chat.
+
+1. In Telegram, open the official [@BotFather](https://t.me/BotFather), send
+   `/newbot`, and follow the prompts. Copy the bot token into your local `.env`
+   as `TELEGRAM_BOT_TOKEN`. Keep it private; never use a `VITE_` prefix.
+2. Open your new bot's chat on your phone and press **Start** (or send `/start`).
+   Bots cannot initiate private conversations until you start them.
+3. In the project terminal, run `npm run telegram:chat`. This read-only helper
+   lists recent chat IDs without printing the bot token. Put your chat ID in `.env`
+   as `TELEGRAM_CHAT_ID`. If several chats appear, choose your intended private chat.
+   If none appear, send your bot another message and run the helper again.
+4. Restart the API and refresh the app. Choose **Send to Telegram** and confirm.
+
+```env
+TELEGRAM_BOT_TOKEN=your-bot-token
+TELEGRAM_CHAT_ID=your-numeric-chat-id
+```
+
+Use a dedicated bot without an existing webhook or another app consuming updates.
+The setup helper reads updates only; it does not send a message or add groceries.
+Old `TWILIO_*` and `SMS_TO_NUMBER` settings are no longer used and can be removed.
+
+The backend keeps credentials and the destination out of React/localStorage,
+loads the saved list, sends plain text, and refuses empty/fully checked lists.
+Lists over 4,096 characters are rejected without truncation. Sends are limited
+once per minute per running process with no automatic retries. Telegram acceptance
+means the message was created, not that the phone has displayed a notification.
+Tests use fake senders; no real messages are sent during testing.
+
+Keep the API on your trusted household device/network; it currently has no user
+authentication. Telegram receives a plain list only when you press **Send to Telegram**.
+The app does not poll Telegram, listen for taps, or sync changes back from your phone.
+Existing checkbox messages are no longer interactive; send a fresh plain list.
+The chat-ID setup helper contacts Telegram only when you run it manually.
+
+Provider references: [Bot setup](https://core.telegram.org/bots/features#botfather),
+[sendMessage](https://core.telegram.org/bots/api#sendmessage),
+[getUpdates](https://core.telegram.org/bots/api#getupdates).

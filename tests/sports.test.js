@@ -29,6 +29,17 @@ const game = normalizeGame(raw);
 test('game lines attach only to the favored team without inventing missing odds', () => {
   const withOdds = (odds) =>
     normalizeGame({ ...raw, competitions: [{ ...raw.competitions[0], odds: [odds] }] });
+  assert.equal(withOdds(null).teams[0].spread, null);
+  const mixed = normalizeGame({
+    ...raw,
+    competitions: [
+      {
+        ...raw.competitions[0],
+        odds: [null, { spread: 2.5, homeTeamOdds: { favorite: true } }],
+      },
+    ],
+  });
+  assert.equal(mixed.teams[1].spread, -2.5);
   const away = withOdds({ spread: 7.5, awayTeamOdds: { favorite: true } });
   assert.equal(away.teams[0].spread, -7.5);
   assert.equal(away.teams[1].spread, null);

@@ -123,34 +123,36 @@ export function Weather({ weather, error, loading, onRefresh }) {
       )}
       {weather && (
         <>
-          <div className="weather-current">
-            <WeatherIcon code={weather.code} />
-            <strong>{degrees(weather.temperature)}</strong>
-            <div>
-              <h3>{conditions(weather.code)}</h3>
-              <p>Feels like {degrees(weather.feelsLike)}</p>
-              <p>
-                {new Date(`${weather.day}T12:00:00`).toLocaleDateString(undefined, {
-                  weekday: 'long',
-                  month: 'long',
-                  day: 'numeric',
-                })}
-              </p>
-            </div>
-          </div>
-          <dl className="weather-details">
-            {[
-              ['High', degrees(weather.high)],
-              ['Low', degrees(weather.low)],
-              ['Chance of precipitation', `${weather.precipitationChance}%`],
-              ['Wind', `${Math.round(weather.wind)} mph`],
-            ].map(([label, value]) => (
-              <div key={label}>
-                <dt>{label}</dt>
-                <dd>{value}</dd>
+          <div className="weather-today">
+            <div className="weather-current">
+              <WeatherIcon code={weather.code} />
+              <strong>{degrees(weather.temperature)}</strong>
+              <div>
+                <h3>{conditions(weather.code)}</h3>
+                <p>Feels like {degrees(weather.feelsLike)}</p>
+                <p>
+                  {new Date(`${weather.day}T12:00:00`).toLocaleDateString(undefined, {
+                    weekday: 'long',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </p>
               </div>
-            ))}
-          </dl>
+            </div>
+            <dl className="weather-details">
+              {[
+                ['High', degrees(weather.high)],
+                ['Low', degrees(weather.low)],
+                ['Chance of precipitation', `${weather.precipitationChance}%`],
+                ['Wind', `${Math.round(weather.wind)} mph`],
+              ].map(([label, value]) => (
+                <div key={label}>
+                  <dt>{label}</dt>
+                  <dd>{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
           <ForecastStrip
             title="The week ahead"
             className="weather-week"

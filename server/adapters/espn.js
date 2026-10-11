@@ -46,7 +46,7 @@ export function normalizeGame(event) {
   // differs across payloads. Missing odds must never appear as a zero-point line.
   const odds = competition.odds?.find(
     (item) =>
-      Number.isFinite(item.spread) &&
+      Number.isFinite(item?.spread) &&
       item.spread !== 0 &&
       (item.awayTeamOdds?.favorite || item.homeTeamOdds?.favorite),
   );
