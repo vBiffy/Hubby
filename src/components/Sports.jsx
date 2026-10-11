@@ -1,7 +1,10 @@
+import { ConferenceFilter } from './ConferenceFilter.jsx';
+import { filterSportsGames } from '../../shared/sports.js';
+import { SportsCalendar } from './SportsCalendar.jsx';
 import { useState } from 'react';
 import { sportsLeagues, sortUpcoming, favoriteGame, sportsDay } from '../../shared/sports.js';
 import { useSports } from '../hooks/useSports.js';
-import { ApRankings } from './ApRankings.jsx';
+import { Select } from './Select.jsx';
 import { currentApPoll } from '../../shared/sports.js';
 
 export function Game({ game, favorites }) {
@@ -56,14 +59,26 @@ export function Game({ game, favorites }) {
   );
 }
 
-export function Sports({ repository, favorites = {} }) {
+export function Sports({
+  repository,
+  favorites = {},
+  calendarItems = [],
+  calendarError,
+  weekStart = 0,
+}) {
   const [league, setLeague] = useState('ncaaf');
   const [pickedDay, setPickedDay] = useState(null);
+  const [conference, setConference] = useState(null);
   const [view, setView] = useState('games');
   const college = ['ncaaf', 'ncaam'].includes(league);
   const selected = favorites[league] || [];
   const { data, loading, error, refresh } = useSports(repository, league, 'games', selected);
-  const games = data?.games || [];
+  const games = filterSportsGames(
+    data?.games || [],
+    college ? conference : null,
+    data?.apPoll,
+    Date.now(),
+  );
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Detroit' });
   const days = [...new Set([today, ...games.map(sportsDay)])].sort();
   // Default to today when games exist, otherwise the next scheduled day.
@@ -100,136 +115,158 @@ export function Sports({ repository, favorites = {} }) {
           <p className="eyebrow">GAME DAY, TOGETHER</p>
           <h2>Games & scores</h2>
         </div>
-        <button disabled={loading} onClick={refresh}>
-          {loading ? 'Updating…' : 'Refresh'}
-        </button>
-      </div>
-      <div className="sports-leagues" role="group" aria-label="Sports league">
-        {sportsLeagues.map((item) => (
+        <div className="sports-header-actions">
           <button
-            key={item.id}
-            aria-pressed={league === item.id}
             onClick={() => {
-              setLeague(item.id);
-              setPickedDay(null);
-              setView('games');
+              window.location.hash = 'settings?section=sports';
             }}
           >
-            {item.name}
+            Favorites
           </button>
-        ))}
+          <button disabled={loading} onClick={refresh}>
+            {loading ? 'Updating…' : 'Refresh'}
+          </button>
+        </div>
       </div>
-      {college && (
-        <div className="sports-view-toggle" role="group" aria-label="College sports view">
-          <button aria-pressed={view === 'games'} onClick={() => setView('games')}>
-            Games
-          </button>
-          <button aria-pressed={view === 'rankings'} onClick={() => setView('rankings')}>
-            AP Top 25
-          </button>
+      <div className="sports-controls">
+        <label>
+          View
+          <Select value={view} onChange={(event) => setView(event.target.value)}>
+            <option value="games">Games &amp; scores</option>
+            <option value="calendar">Sports calendar</option>
+          </Select>
+        </label>
+        {view === 'games' && (
+          <>
+            <label>
+              League
+              <Select
+                value={league}
+                onChange={(event) => {
+                  setLeague(event.target.value);
+                  setConference(null);
+                  setPickedDay(null);
+                }}
+              >
+                {sportsLeagues.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </Select>
+            </label>
+            {college && (
+              <ConferenceFilter
+                key={league}
+                repository={repository}
+                league={league}
+                value={conference}
+                onChange={(value) => {
+                  setConference(value);
+                  setPickedDay(null);
+                }}
+              />
+            )}
+          </>
+        )}
+      </div>
+      {view === 'games' && (
+        <div className="sports-day-picker" role="group" aria-label="Choose game day">
+          {days.map((day) => (
+            <button key={day} aria-pressed={activeDay === day} onClick={() => setPickedDay(day)}>
+              {day === today
+                ? 'Today'
+                : new Date(`${day}T12:00:00`).toLocaleDateString(undefined, {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+            </button>
+          ))}
         </div>
       )}
-      <p className="hint">
-        Favorites come first within each day. Choose yours in <a href="#settings">Customize</a>.
-        Game times use Lansing time.
-      </p>
-      {error && (
-        <p role="alert" className="error">
-          {error}
-          {data && ' Showing the last loaded scores.'}
-        </p>
-      )}
-      {data?.warning && (
-        <p role="status" className="hint">
-          {data.warning}
-        </p>
-      )}
-      {loading && !data && (
-        <p role="status" className="empty">
-          Loading games from ESPN…
-        </p>
-      )}
-      {data && view === 'rankings' && (
-        <div className="sports-results" tabIndex={0} role="region" aria-label="AP rankings">
-          <ApRankings poll={data.apPoll} favorites={selected} />
+      {view === 'calendar' && (
+        <div className="sports-results" tabIndex={0} role="region" aria-label="Sports calendar">
+          <SportsCalendar items={calendarItems} error={calendarError} weekStart={weekStart} />
         </div>
       )}
-      {data && view === 'games' && (
+      {view !== 'calendar' && (
         <>
-          <div className="sports-day-picker" role="group" aria-label="Choose game day">
-            {days.map((day) => (
-              <button key={day} aria-pressed={activeDay === day} onClick={() => setPickedDay(day)}>
-                {day === today
-                  ? 'Today'
-                  : new Date(`${day}T12:00:00`).toLocaleDateString(undefined, {
-                      weekday: 'short',
-                      month: 'short',
-                      day: 'numeric',
-                    })}
-              </button>
-            ))}
-          </div>
-          <div
-            className="sports-results"
-            key={`${league}:${activeDay}`}
-            tabIndex={0}
-            role="region"
-            aria-label={`Games and scores for ${activeDay}`}
-          >
-            {data.apPoll && currentApPoll(data.apPoll, Date.now()) && (
+          {error && (
+            <p role="alert" className="error">
+              {error}
+              {data && ' Showing the last loaded scores.'}
+            </p>
+          )}
+          {data?.warning && (
+            <p role="status" className="hint">
+              {data.warning}
+            </p>
+          )}
+          {loading && !data && (
+            <p role="status" className="empty">
+              Loading games from ESPN…
+            </p>
+          )}
+          {conference === 'top25' && data && !currentApPoll(data.apPoll, Date.now()) && (
+            <p role="status" className="hint">
+              No current AP poll is available. Choose All games or a conference to see games.
+            </p>
+          )}
+          {data && view === 'games' && (
+            <>
+              <div
+                className="sports-results"
+                key={`${league}:${activeDay}:${conference?.id || conference || 'all'}`}
+                tabIndex={0}
+                role="region"
+                aria-label={`Games and scores for ${activeDay}`}
+              >
+                <h3>
+                  {new Date(`${activeDay}T12:00:00`).toLocaleDateString(undefined, {
+                    weekday: 'long',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </h3>
+                <h3>Upcoming games</h3>
+                <div className="sports-games">
+                  {upcoming.map((game) => (
+                    <Game key={game.id} game={game} favorites={selected} />
+                  ))}
+                </div>
+                {!upcoming.length && (
+                  <p className="empty">No upcoming games on this day. Choose another day above.</p>
+                )}
+                <h3>Live & recent scores</h3>
+                <div className="sports-games">
+                  {scores.map((game) => (
+                    <Game key={game.id} game={game} favorites={selected} />
+                  ))}
+                </div>
+                {!scores.length && <p className="empty">No live games or results on this day.</p>}
+              </div>
               <p className="hint">
-                Badges use the current AP poll, published{' '}
-                {new Date(data.apPoll.publishedAt).toLocaleDateString(undefined, {
+                Last updated{' '}
+                {new Date(data.fetchedAt).toLocaleTimeString(undefined, {
                   timeZone: 'America/Detroit',
-                  month: 'short',
-                  day: 'numeric',
+                  hour: 'numeric',
+                  minute: '2-digit',
+                  hour12: true,
                 })}
-                .
+                . Updates every minute while this tab is open.
               </p>
-            )}
-            <h3>
-              {new Date(`${activeDay}T12:00:00`).toLocaleDateString(undefined, {
-                weekday: 'long',
-                month: 'long',
-                day: 'numeric',
-              })}
-            </h3>
-            <h3>Upcoming games</h3>
-            <div className="sports-games">
-              {upcoming.map((game) => (
-                <Game key={game.id} game={game} favorites={selected} />
-              ))}
-            </div>
-            {!upcoming.length && (
-              <p className="empty">No upcoming games on this day. Choose another day above.</p>
-            )}
-            <h3>Live & recent scores</h3>
-            <div className="sports-games">
-              {scores.map((game) => (
-                <Game key={game.id} game={game} favorites={selected} />
-              ))}
-            </div>
-            {!scores.length && <p className="empty">No live games or results on this day.</p>}
-          </div>
+            </>
+          )}
           <p className="hint">
-            Last updated{' '}
-            {new Date(data.fetchedAt).toLocaleTimeString(undefined, {
-              timeZone: 'America/Detroit',
-              hour: 'numeric',
-              minute: '2-digit',
-              hour12: true,
-            })}
-            . Updates every minute while this tab is open.
+            Scores and schedules from{' '}
+            <a href="https://www.espn.com/" target="_blank" rel="noreferrer">
+              ESPN
+            </a>
+            .
           </p>
         </>
       )}
-      <p className="hint">
-        Scores and schedules from{' '}
-        <a href="https://www.espn.com/" target="_blank" rel="noreferrer">
-          ESPN
-        </a>
-        .
-      </p>
     </section>
   );
 }

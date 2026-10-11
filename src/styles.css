@@ -2058,3 +2058,248 @@ input[type='color'] {
   margin: 0;
   white-space: nowrap;
 }
+
+/* Full-width daily plans replace the hub's always-open sports/notes sidebar. */
+.hub-family-picker {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 2px 12px;
+}
+.hub-family-picker button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  border-radius: 24px;
+  padding: 6px 12px 6px 6px;
+}
+.hub-family-picker button[aria-pressed='true'] {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.hub-member-avatar {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  font-weight: 700;
+}
+.hub-family-track {
+  display: flex;
+  position: relative;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  padding: 4px 2px 12px;
+}
+.hub-person-day {
+  /* Keep day cards consistent; extra window width reveals more people. */
+  flex: 0 0 320px;
+  /* Leave a glimpse of the next person on narrow windows. */
+  max-width: calc(100% - 28px);
+  height: clamp(240px, 36dvh, 360px);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  scroll-snap-align: start;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 18px;
+}
+.hub-person-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.hub-person-heading .hint {
+  margin-left: auto;
+}
+.hub-person-day .hub-plan-list {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+}
+.hub-swipe-hint {
+  margin: 0;
+}
+.hub-notes-dialog {
+  width: min(680px, calc(100vw - 32px));
+  max-height: 85dvh;
+  overflow-y: auto;
+}
+.hub-notes-dialog::backdrop {
+  background: #18251e88;
+}
+.hub-notes-dialog .note-grid {
+  grid-template-columns: 1fr;
+}
+.hub-notes-dialog > .panel {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* A compact landscape layout keeps cards readable without stretching empty
+   days. More available width reveals more cards; busy days scroll internally. */
+.app:has(.hub-overview) > main {
+  width: 100%;
+  max-width: none;
+}
+.hub-overview > .hub-week,
+.hub-overview > .hub-plans {
+  margin-bottom: 0;
+}
+.hub-family-track {
+  align-items: stretch;
+}
+@media (min-width: 651px) and (max-width: 1400px) {
+  .app:has(.hub-overview) > main {
+    padding: 20px 16px;
+  }
+  .app:has(.hub-overview) > main > header {
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .app:has(.hub-overview) > main > header h1 {
+    font-size: 24px;
+  }
+  .app:has(.hub-overview) > main > header time {
+    font-size: 20px;
+  }
+  .hub-overview .panel {
+    padding: 16px;
+  }
+  .hub-day-strip button {
+    padding: 8px 4px;
+    gap: 4px;
+  }
+  .hub-person-day {
+    padding: 14px;
+  }
+}
+@media (max-width: 850px) {
+  .hub-plans > .panel-heading {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .hub-plans > .panel-heading > .actions {
+    flex-wrap: wrap;
+  }
+}
+.sports-calendar-dialog {
+  width: min(1200px, calc(100vw - 32px));
+  max-height: 90dvh;
+  overflow-y: auto;
+}
+.sports-calendar-dialog::backdrop {
+  background: #18251e88;
+}
+.sports-calendar-content {
+  min-width: 0;
+}
+.sports-calendar-content .calendar {
+  margin-bottom: 0;
+}
+.sports-panel > .sports-results {
+  flex-shrink: 1;
+}
+
+.quick-reminders-dialog {
+  width: min(640px, calc(100vw - 32px));
+  max-height: 90dvh;
+  overflow-y: auto;
+}
+.quick-reminders-dialog::backdrop {
+  background: #18251e88;
+}
+.quick-reminder-presets {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.quick-reminder-presets button {
+  text-align: left;
+  padding: 14px;
+}
+.quick-reminder-presets small {
+  display: block;
+  margin-top: 4px;
+  color: var(--subtle);
+}
+.quick-reminder-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+  padding: 12px 0;
+}
+.quick-reminder-item small {
+  display: block;
+  color: var(--subtle);
+  margin-top: 6px;
+}
+.hub-plans > .panel-heading {
+  flex-wrap: wrap;
+}
+.hub-plans > .panel-heading > .actions {
+  flex-wrap: wrap;
+}
+
+.conference-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+}
+.conference-options {
+  width: 100%;
+}
+.conference-options label {
+  max-width: 380px;
+}
+.conference-options .hint {
+  margin-bottom: 0;
+}
+
+/* Keep the game controls compact while preserving comfortable touch targets. */
+.sports-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.sports-controls label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--subtle);
+  min-width: 0;
+}
+.sports-controls .shared-select > button {
+  width: 100%;
+  text-align: left;
+  color: var(--ink);
+  border-radius: 14px;
+}
+@media (max-width: 650px) {
+  .sports-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+}
+
+.sports-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

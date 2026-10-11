@@ -1,3 +1,4 @@
+import { createQuickReminders } from './domain/quickReminders.js';
 import { createGroceryText } from './domain/groceryText.js';
 import { createTelegram } from './adapters/telegram.js';
 import pg from 'pg';
@@ -23,6 +24,18 @@ else console.warn('Memory demo: changes will be lost on restart.');
 const repo = pool ? createPostgresRepository(pool) : createMemoryRepository();
 const hub = createHub(repo);
 const telegram = createTelegram();
+const quickReminders = createQuickReminders(repo, {
+  household: telegram,
+});
+// Local scheduler checks stored deadlines; it does not poll Telegram for messages.
+const reminderTimer = setInterval(
+  () =>
+    quickReminders
+      .tick()
+      .catch(() => console.warn('Quick reminder scheduler unavailable; checking again shortly.')),
+  5000,
+);
+quickReminders.tick().catch(() => console.warn('Quick reminder scheduler unavailable.'));
 const weather = createWeather(createOpenMeteo());
 const server = createApp(
   hub,
@@ -33,11 +46,13 @@ const server = createApp(
   weather,
   createSports(createEspn()),
   createGroceryText(hub, telegram),
+  quickReminders,
 ).listen(process.env.PORT || 3001, process.env.HOST || '127.0.0.1', () =>
   console.log('Hubby API ready on port', process.env.PORT || 3001),
 );
 for (const signal of ['SIGINT', 'SIGTERM'])
   process.on(signal, () => {
+    clearInterval(reminderTimer);
     server.close(async () => {
       await pool?.end();
       process.exit(0);

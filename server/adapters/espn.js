@@ -102,6 +102,28 @@ async function mapLimited(values, action) {
   return result;
 }
 
+// Standings group conferences directly; divisions contribute to their parent conference.
+export function normalizeConferences(data) {
+  if (!Array.isArray(data.children)) throw new Error('Missing ESPN conferences.');
+  function teamIds(group) {
+    return [
+      ...(group.standings?.entries || []).map((entry) => String(entry.team?.id || '')),
+      ...(group.children || []).flatMap(teamIds),
+    ].filter((id) => /^\d+$/.test(id));
+  }
+  const conferences = data.children
+    .map((group) => ({
+      id: String(group.id),
+      name: group.name,
+      teamIds: [...new Set(teamIds(group))],
+    }))
+    .filter(
+      (group) => /^\d+$/.test(group.id) && typeof group.name === 'string' && group.teamIds.length,
+    );
+  if (!conferences.length) throw new Error('Incomplete ESPN conferences.');
+  return conferences.sort((a, b) => a.name.localeCompare(b.name));
+}
+
 export function createEspn(fetchSports = fetch) {
   async function json(url) {
     const response = await fetchSports(url, { signal: AbortSignal.timeout(10000) });
@@ -109,6 +131,46 @@ export function createEspn(fetchSports = fetch) {
     return response.json();
   }
   return {
+    async conferences(league, now = Date.now()) {
+      if (league.id === 'ncaam') {
+        // Before November, standings have no team rows for the upcoming season.
+        // The core season directory is complete, unlike the site groups endpoint
+        // which silently returns only the first 25 conferences.
+        const date = new Date(now);
+        const year = date.getUTCFullYear() + (date.getUTCMonth() >= 6 ? 1 : 0);
+        const base =
+          'https://sports.core.api.espn.com/v2/sports/basketball/' +
+          `leagues/mens-college-basketball/seasons/${year}/types/2/groups/`;
+        const directory = await json(`${base}50/children?limit=1000`);
+        if (!Array.isArray(directory.items) || directory.items.length !== directory.count) {
+          throw new Error('Incomplete conference directory.');
+        }
+        const groups = await mapLimited(directory.items, async (entry) => {
+          const id = entry.$ref?.match(/\/groups\/(\d+)/)?.[1];
+          if (!id) throw new Error('Missing conference ID.');
+          const [group, teams] = await Promise.all([
+            json(`${base}${id}`),
+            json(`${base}${id}/teams?limit=1000`),
+          ]);
+          if (!Array.isArray(teams.items) || teams.items.length !== teams.count) {
+            throw new Error('Incomplete conference membership.');
+          }
+          return {
+            id,
+            name: group.name,
+            standings: {
+              entries: teams.items.map((team) => ({
+                team: { id: team.$ref?.match(/\/teams\/(\d+)/)?.[1] },
+              })),
+            },
+          };
+        });
+        return normalizeConferences({ children: groups });
+      }
+      return normalizeConferences(
+        await json(`https://site.api.espn.com/apis/v2/sports/${league.path}/standings`),
+      );
+    },
     async rankings(league) {
       return normalizeApPoll(await json(`${site}${league.path}/rankings`));
     },
