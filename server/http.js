@@ -1,3 +1,4 @@
+import { MessagingUnavailableError } from './domain/groceryText.js';
 import express from 'express';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -6,6 +7,7 @@ import { WeatherUnavailableError } from './domain/weather.js';
 import { SportsUnavailableError } from './domain/sports.js';
 
 function errorStatus(error) {
+  if (error instanceof MessagingUnavailableError) return 503;
   if (error instanceof WeatherUnavailableError) return 503;
   if (error instanceof SportsUnavailableError) return 503;
   if (error.type === 'entity.too.large') return 413;
@@ -16,7 +18,7 @@ function errorStatus(error) {
 }
 
 // Inbound adapter: translate HTTP requests into application use cases.
-export function createApp(hub, storage, health = async () => {}, weather, sports) {
+export function createApp(hub, storage, health = async () => {}, weather, sports, groceryText) {
   const app = express();
   app.disable('x-powered-by');
   app.use(express.json({ limit: '64kb' }));
@@ -41,6 +43,18 @@ export function createApp(hub, storage, health = async () => {}, weather, sports
       .json(
         resource === 'teams' ? await sports.teams(league) : await sports.games(league, favorites),
       );
+  });
+  app.get('/api/groceries/text/configuration', (req, res) => {
+    res
+      .set('Cache-Control', 'no-store')
+      .json(groceryText?.configuration() || { configured: false });
+  });
+  app.post('/api/groceries/text', async (req, res) => {
+    if (!groceryText) throw new MessagingUnavailableError('Telegram is not configured yet.');
+    res
+      .set('Cache-Control', 'no-store')
+      .status(202)
+      .json(await groceryText.send());
   });
   app.get('/api/:kind', async (req, res) => res.json(await hub.list(req.params.kind)));
   app.post('/api/events/:id/restore', async (req, res) =>

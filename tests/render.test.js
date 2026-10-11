@@ -151,6 +151,22 @@ test('calendar, editor and reminder popup render without crashing', async () => 
     const summary = renderToStaticMarkup(React.createElement(WeatherSummary, { weather }));
     assert.doesNotMatch(summary, /The week ahead/);
     assert.match(summary, /60°F/);
+    const { Groceries } = await vite.ssrLoadModule('/src/components/Groceries.jsx');
+    const groceryProps = { onSave() {}, onDelete() {} };
+    const noChecked = renderToStaticMarkup(
+      React.createElement(Groceries, {
+        ...groceryProps,
+        items: [{ id: 'milk', title: 'Milk', done: false }],
+      }),
+    );
+    assert.match(noChecked, /disabled=""[^>]*>Clear checked items/);
+    const withChecked = renderToStaticMarkup(
+      React.createElement(Groceries, {
+        ...groceryProps,
+        items: [{ id: 'milk', title: 'Milk', done: true }],
+      }),
+    );
+    assert.match(withChecked, /<button type="button">Clear checked items/);
     const { Sports, Game } = await vite.ssrLoadModule('/src/components/Sports.jsx');
     const gameCard = renderToStaticMarkup(
       React.createElement(Game, {

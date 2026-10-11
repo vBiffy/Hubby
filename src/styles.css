@@ -802,7 +802,11 @@ input[type='color'] {
   font-size: 12px;
 }
 .weather-panel {
-  max-width: 900px;
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  container-type: inline-size;
+  container-name: weather;
 }
 .weather-current {
   display: flex;
@@ -1961,4 +1965,96 @@ input[type='color'] {
 }
 .family-setup .family-members {
   margin: 24px 0;
+}
+
+/* Adapt to the actual panel width, so split-screen windows and the Pi retain
+   readable swipe cards while a wide display can show the complete week. */
+.app:has(.weather-panel) > main {
+  width: 100%;
+  max-width: none;
+}
+@container weather (min-width: 1050px) {
+  .weather-today {
+    display: grid;
+    grid-template-columns: minmax(360px, 1fr) minmax(0, 1.2fr);
+    align-items: center;
+    gap: 24px;
+  }
+  .weather-current {
+    margin: 16px 0;
+    gap: 20px;
+  }
+  .weather-details {
+    gap: 10px;
+    margin: 0;
+  }
+  .weather-details > div {
+    padding: 14px;
+  }
+  .weather-details dd {
+    font-size: 22px;
+  }
+  .weather-week {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .weather-week .weather-day {
+    padding: 14px;
+  }
+  .weather-week .weather-range {
+    font-size: 20px;
+  }
+  .weather-forecast:has(.weather-week) .forecast-heading .actions {
+    display: none;
+  }
+  .weather-forecast:has(.weather-week) .forecast-heading .hint {
+    display: none;
+  }
+}
+/* Reduce decorative spacing on shorter desktop displays, without clipping
+   content or disabling scrolling when text size or errors require more room. */
+@media (min-width: 1200px) and (max-height: 1000px) {
+  .app:has(.weather-panel) > main {
+    padding: 24px 32px;
+  }
+  .app:has(.weather-panel) > main > header {
+    margin-bottom: 18px;
+  }
+  .weather-panel {
+    padding: 22px;
+  }
+  .weather-panel .weather-forecast {
+    margin-top: 18px;
+  }
+  .weather-panel .forecast-heading {
+    margin-bottom: 10px;
+  }
+  .weather-panel .weather-icon {
+    margin-top: 12px;
+    margin-bottom: 8px;
+  }
+  .weather-panel .weather-current .weather-icon {
+    margin: 0;
+  }
+  .weather-panel .weather-condition {
+    min-height: 2.2em;
+    margin: 6px 0;
+  }
+  .weather-panel .weather-day small,
+  .weather-panel .weather-hour small {
+    margin-top: 5px;
+  }
+  .weather-panel > .hint {
+    margin: 8px 0 0;
+  }
+}
+
+.grocery-bulk-actions {
+  align-items: center;
+  flex-wrap: wrap;
+}
+.grocery-bulk-actions .check {
+  margin: 0;
+  white-space: nowrap;
 }
