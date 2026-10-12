@@ -63,7 +63,8 @@ select:focus-visible {
   --line: #e4e7df;
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: var(--navigation-width, 220px) minmax(0, 1fr);
+  transition: grid-template-columns 450ms ease-in-out;
   background: var(--background);
   color: var(--ink);
 }
@@ -470,7 +471,7 @@ input[type='color'] {
 }
 @media (max-width: 1100px) {
   .app {
-    grid-template-columns: 180px 1fr;
+    --navigation-width: 180px;
   }
   aside {
     padding: 24px 14px;
@@ -2302,4 +2303,93 @@ input[type='color'] {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+/* Keep the sidebar at its expanded width while the grid column closes.
+   Moving that fixed-width panel avoids squeezing or wrapping its labels. */
+.app > aside {
+  width: 220px;
+  min-width: 0;
+  overflow-x: clip;
+  transition:
+    transform 450ms ease-in-out,
+    visibility 0s;
+}
+.app > aside > * {
+  flex-shrink: 0;
+}
+.app.navigation-collapsed {
+  --navigation-width: 0px;
+}
+.app.navigation-collapsed > aside {
+  transform: translateX(-100%);
+  visibility: hidden;
+  transition:
+    transform 450ms ease-in-out,
+    visibility 0s 450ms;
+}
+@media (min-width: 651px) and (max-width: 1100px) {
+  .app > aside {
+    width: 180px;
+  }
+}
+/* The handle follows the animated sidebar edge and remains reachable when closed. */
+.navigation-toggle {
+  position: fixed;
+  z-index: 30;
+  top: 50dvh;
+  left: max(0px, calc(var(--navigation-width, 220px) - 16px));
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 32px;
+  min-height: 56px;
+  padding: 0;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px #0001;
+  transition: left 450ms ease-in-out;
+}
+.navigation-toggle > span {
+  font-size: 28px;
+  line-height: 1;
+}
+@media (max-width: 650px) {
+  .navigation-toggle {
+    top: 12px;
+    left: auto;
+    right: 12px;
+    transform: none;
+    min-height: 44px;
+  }
+  /* Mobile navigation sits above the content, so animate its height too. */
+  .app > aside {
+    width: 100%;
+    max-height: 230px;
+    transition:
+      max-height 450ms ease-in-out,
+      padding 450ms ease-in-out,
+      opacity 350ms ease-in-out,
+      transform 450ms ease-in-out;
+    overflow: hidden;
+  }
+  .app.navigation-collapsed > aside {
+    max-height: 0;
+    padding: 0;
+    border-bottom: 0;
+    transform: translateY(-100%);
+    transition:
+      max-height 450ms ease-in-out,
+      padding 450ms ease-in-out,
+      opacity 350ms ease-in-out,
+      transform 450ms ease-in-out,
+      visibility 0s 450ms;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .navigation-toggle,
+  .app,
+  .app > aside,
+  .app.navigation-collapsed > aside {
+    transition: none;
+  }
 }

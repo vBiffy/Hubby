@@ -69,6 +69,7 @@ export function App({ repository }) {
   const weatherProps = useWeather(repository);
   const [tab, setTab] = useState(location.hash.slice(1).split('?')[0] || 'home');
   const [settings, setSettings] = useState(readSettings);
+  const [navigationOpen, setNavigationOpen] = useState(true);
   // Calendar inclusion is opt-in and independent of favorite sorting in Sports.
   const calendarTeams = Object.fromEntries(
     Object.entries(settings.sportsFavorites || {}).map(([league, ids]) => [
@@ -333,10 +334,12 @@ export function App({ repository }) {
   }
   return (
     <div
-      className={`app ${settings.dark ? 'dark' : ''} ${settings.large ? 'large' : ''}`}
+      className={`app ${settings.dark ? 'dark' : ''} ${settings.large ? 'large' : ''} ${
+        navigationOpen ? '' : 'navigation-collapsed'
+      }`}
       style={{ '--accent': settings.accent }}
     >
-      <aside>
+      <aside id="app-navigation" inert={!navigationOpen}>
         <a className="brand" href="#home">
           <span className="brand-icon">h.</span>hubby
         </a>
@@ -363,6 +366,16 @@ export function App({ repository }) {
         </div>
       </aside>
       <main>
+        <button
+          className="navigation-toggle"
+          aria-label={navigationOpen ? 'Close navigation' : 'Open navigation'}
+          title={navigationOpen ? 'Close navigation' : 'Open navigation'}
+          aria-controls="app-navigation"
+          aria-expanded={navigationOpen}
+          onClick={() => setNavigationOpen((open) => !open)}
+        >
+          <span aria-hidden="true">{navigationOpen ? '\u2039' : '\u203a'}</span>
+        </button>
         <header>
           <div>
             <p className="eyebrow">
