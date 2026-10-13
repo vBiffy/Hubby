@@ -1,7 +1,7 @@
 import { QuickReminders } from './QuickReminders.jsx';
 import { SportsCalendarDialog } from './SportsCalendar.jsx';
 import { HubNotes } from './HubNotes.jsx';
-import { useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import {
   dateKey,
   occurrences,
@@ -64,9 +64,27 @@ export function HubOverview({
   const visiblePeople = members.filter(
     (member) => selectedPerson === 'everyone' || member.id === selectedPerson,
   );
+  const previousView = useRef(null);
+  useLayoutEffect(() => {
+    const view = `${selectedPerson}:${selected}`;
+    const changed = previousView.current !== null && previousView.current !== view;
+    previousView.current = view;
+    if (!changed || !track.current) return;
+    track.current.scrollTo({ left: 0, behavior: 'instant' });
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    // Animate the content without scaling the cards or interfering with touch
+    // scrolling. Cancel on rapid selections so only the latest view finishes.
+    const animation = track.current.animate(
+      [
+        { opacity: 0, transform: 'translateX(16px)' },
+        { opacity: 1, transform: 'translateX(0)' },
+      ],
+      { duration: 350, easing: 'ease-in-out' },
+    );
+    return () => animation.cancel();
+  }, [selectedPerson, selected]);
   function choosePerson(id) {
     setPerson(id);
-    track.current?.scrollTo({ left: 0 });
   }
   return (
     <div className="hub-overview">

@@ -1,3 +1,5 @@
+import { TouchKeyboard } from './components/TouchKeyboard.jsx';
+import { useAnimatedWindows } from './hooks/useAnimatedWindows.js';
 import { FamilySetup } from './components/FamilySetup.jsx';
 import { useEffect, useState } from 'react';
 import { Groceries } from './components/Groceries.jsx';
@@ -66,6 +68,7 @@ function readSettings() {
 // Shell owns composition and navigation. Feature components only receive their
 // own data/actions. Hash navigation also supports direct #notes/#calendar links.
 export function App({ repository }) {
+  useAnimatedWindows();
   const weatherProps = useWeather(repository);
   const [tab, setTab] = useState(location.hash.slice(1).split('?')[0] || 'home');
   const [settings, setSettings] = useState(readSettings);
@@ -316,6 +319,7 @@ export function App({ repository }) {
         className={`app setup-shell ${settings.dark ? 'dark' : ''}`}
         style={{ '--accent': settings.accent }}
       >
+        <TouchKeyboard />
         {!loaded ? (
           <main className="family-setup">
             <h1>Connecting to your kitchen</h1>
@@ -339,11 +343,14 @@ export function App({ repository }) {
       }`}
       style={{ '--accent': settings.accent }}
     >
+      <TouchKeyboard />
       <aside id="app-navigation" inert={!navigationOpen}>
         <a className="brand" href="#home">
           <span className="brand-icon">h.</span>hubby
         </a>
-        <p className="eyebrow">A LITTLE MORE TOGETHER</p>
+        <p className="eyebrow" style={{ fontSize: '9px' }}>
+          A LITTLE MORE, TOGETHER
+        </p>
         <nav>
           {[
             ['home', '⌂', 'Hub'],

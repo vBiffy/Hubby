@@ -311,3 +311,44 @@ Changing leagues resets the game filter and day selection.
 Conference membership comes from ESPN and is cached for six hours. Basketball uses
 complete upcoming-season conference directories rather than the previous season's
 standings. A failed conference lookup leaves All games and AP Top 25 available.
+
+### Built-in touch keyboard
+
+Tap an editable text field to open the themed keyboard, or a numeric/phone field
+for the number pad. It works in setup, every tab, and popups. Use Shift, Symbols,
+Space, Backspace, Clear, and Next; note fields also offer New line. Done, Close,
+or Escape dismisses the keyboard without saving or submitting the form. Tap the
+field again to reopen it. Physical keyboards continue to work.
+
+Checkboxes, dropdowns, color pickers, and date pickers retain their dedicated
+controls. New editable fields automatically participate; `data-keyboard="off"`
+opts a field out. The keyboard attempts to suppress the operating system keyboard
+while open; platform behavior can vary. Styles use `.touch-keyboard` and
+`.touch-number-pad` in `src/styles.css`.
+
+### Compact plan editor
+
+Add/Edit plan uses a two-column layout on landscape touchscreens. With three
+family members, the standard event form fits at 1024x768, including an optional
+end time. The keyboard opens only after selecting a field. Smaller windows,
+expanded date pickers, larger text, and an open keyboard retain scrolling when
+needed so controls remain reachable.
+
+Choose **Repeat** to open a separate themed window for frequency, custom weekdays,
+and the optional repeat-through date. **Apply repeat** updates the unsaved plan;
+**Cancel** leaves its recurrence unchanged. Save the plan to persist it. Repeat
+settings remain unavailable when editing only one occurrence.
+
+The plan editor places Location beside separate All day and Set an end date/time
+checkboxes. Start date/time is stacked in the left column; the end picker uses a
+reserved right-column area below Location, so toggling it does not resize the
+window. Repeat settings opens as a centered modal over the plan editor.
+
+### Shared transitions
+
+Screens, settings subtabs, popup windows, dropdown menus, date pickers, and the
+touch keyboard use a consistent 350ms fade on opening. Popup size changes animate
+at the same pace, and the Hub's family/day selection adds a small slide. Reduced
+motion preferences disable these transitions. Adjust `hub-content-enter` in
+`src/styles.css` for opening animations and `src/hooks/useAnimatedWindows.js`
+for popup resizing.

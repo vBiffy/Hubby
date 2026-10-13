@@ -9,6 +9,27 @@ import { createServer } from 'vite';
 test('calendar, editor and reminder popup render without crashing', async () => {
   const vite = await createServer({ server: { middlewareMode: true, hmr: false } });
   try {
+    const { KeyboardKeys } = await vite.ssrLoadModule('/src/components/TouchKeyboard.jsx');
+    const numberKeys = renderToStaticMarkup(
+      React.createElement(KeyboardKeys, {
+        layout: 'number',
+        onKey() {},
+      }),
+    );
+    assert.match(numberKeys, /Backspace/);
+    assert.match(numberKeys, /Next/);
+    assert.doesNotMatch(numberKeys, /Shift|Space|New line/);
+    const textKeys = renderToStaticMarkup(
+      React.createElement(KeyboardKeys, {
+        layout: 'text',
+        multiline: true,
+        uppercase: true,
+        onKey() {},
+      }),
+    );
+    assert.match(textKeys, /Caps/);
+    assert.match(textKeys, /New line/);
+    assert.match(textKeys, />Q</);
     const { FamilySetup, demoMembers } = await vite.ssrLoadModule(
       '/src/components/FamilySetup.jsx',
     );
@@ -72,6 +93,23 @@ test('calendar, editor and reminder popup render without crashing', async () => 
     );
     assert.match(editor, /When should we remind you/);
     assert.match(editor, /15 minutes before/);
+    assert.match(editor, /plan-editor-form/);
+    assert.doesNotMatch(editor, /Repeat through|Repeat every week on/);
+    const { RepeatEditor } = await vite.ssrLoadModule('/src/components/RepeatEditor.jsx');
+    const repeatEditor = renderToStaticMarkup(
+      React.createElement(RepeatEditor, {
+        draft: { ...items[0], startsAt: '2026-10-08T09:00', repeat: 'custom', repeatDays: [2, 4] },
+        weekStart: 0,
+        onApply() {},
+        onCancel() {},
+      }),
+    );
+    assert.match(repeatEditor, /Repeat settings/);
+    assert.equal((repeatEditor.match(/type="radio"/g) || []).length, 6);
+    assert.doesNotMatch(repeatEditor, /shared-select-menu/);
+    assert.match(repeatEditor, /Repeat every week on/);
+    assert.match(repeatEditor, /Repeat through/);
+    assert.match(repeatEditor, /Apply repeat/);
     const allDayEditor = renderToStaticMarkup(
       React.createElement(EventEditor, {
         draft: {

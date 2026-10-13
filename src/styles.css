@@ -1,9 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,100..700;1,100..700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
 /* Theme tokens are the single place to tune spacing, color and touch sizing.
    System fonts remain usable when the kitchen hub has no internet access. */
 :root {
-  font-family: 'DM Sans', system-ui, sans-serif;
+  font-family: 'Josefin Sans', system-ui, sans-serif;
   color: #263b33;
   background: #f5f4ef;
   font-synthesis: none;
@@ -88,7 +89,9 @@ aside {
 }
 .brand {
   text-decoration: none;
-  font-family: Manrope, system-ui;
+  font-family:
+    Josefin Sans,
+    system-ui;
   font-size: 30px;
   font-weight: 800;
   display: flex;
@@ -102,7 +105,7 @@ aside {
   padding: 3px 11px;
 }
 .eyebrow {
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 2px;
   font-weight: 700;
   color: var(--subtle);
@@ -160,7 +163,9 @@ header {
 h1,
 h2,
 h3 {
-  font-family: Manrope, system-ui;
+  font-family:
+    Josefin Sans,
+    system-ui;
   margin: 0;
   font-weight: 700;
 }
@@ -214,6 +219,13 @@ header time {
   padding: 24px;
   margin-bottom: 22px;
   min-width: 0;
+}
+/* Popup panels must override ordinary cards' bottom margin. Keyboard hosts
+   can still reserve space below the dialog using their more specific rules. */
+dialog.panel {
+  position: fixed;
+  inset: 0;
+  margin: auto;
 }
 .panel-heading {
   display: flex;
@@ -658,19 +670,6 @@ input[type='color'] {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-}
-.picker-stepper {
-  display: flex;
-  flex: 1;
-  align-items: flex-end;
-  gap: 4px;
-}
-.picker-stepper > button {
-  width: 44px;
-  flex-shrink: 0;
-  padding: 6px;
-  min-height: 48px;
-  font-size: 20px;
 }
 .picker-number {
   flex: 1;
@@ -2353,6 +2352,12 @@ input[type='color'] {
   font-size: 28px;
   line-height: 1;
 }
+/* Native dialogs and the plan editor's modal overlay share this rule. Hidden
+   handles cannot receive pointer clicks or keyboard focus while a popup is open. */
+body:has(dialog[open], [aria-modal='true'], .touch-keyboard) .navigation-toggle {
+  visibility: hidden;
+  pointer-events: none;
+}
 @media (max-width: 650px) {
   .navigation-toggle {
     top: 12px;
@@ -2391,5 +2396,302 @@ input[type='color'] {
   .app > aside,
   .app.navigation-collapsed > aside {
     transition: none;
+  }
+}
+
+/* Shared touch entry stays above page content. Modal hosts reserve space above
+   it; the portal keeps the keyboard in the same native dialog top layer. */
+.touch-keyboard {
+  position: fixed;
+  z-index: 110;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(100%, 1000px);
+  padding: 12px 16px max(12px, env(safe-area-inset-bottom));
+  border: 1px solid var(--line);
+  border-radius: 20px 20px 0 0;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 -8px 32px #0002;
+  user-select: none;
+}
+.touch-number-pad {
+  width: min(100%, 440px);
+}
+.touch-keyboard-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.touch-keyboard-rows {
+  display: grid;
+  gap: 6px;
+}
+.touch-keyboard-row,
+.touch-keyboard-actions {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+.touch-keyboard-row button {
+  flex: 1;
+  min-width: 0;
+  max-width: 84px;
+  padding: 6px;
+  border-radius: 12px;
+  background: var(--background);
+}
+.touch-keyboard-actions {
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.touch-keyboard-actions button {
+  flex: 1;
+  padding: 6px 10px;
+}
+.touch-keyboard-actions button:last-child {
+  background: var(--accent);
+  color: white;
+}
+
+/* Keep routine plan entry on one screen. Detailed recurrence editing lives in
+   its own dialog; short windows and an open keyboard retain a scroll fallback. */
+.plan-editor {
+  width: min(820px, 100%);
+  max-height: calc(100dvh - 32px);
+  padding: 20px;
+}
+.plan-editor:focus {
+  outline: none;
+}
+.plan-editor h2 {
+  margin-bottom: 12px;
+}
+.plan-editor-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+}
+.plan-editor-form label {
+  margin: 0;
+  gap: 5px;
+}
+.plan-editor-form > .plan-time-range,
+.plan-editor-form > .datetime-picker,
+.plan-editor-form > .plan-end-time,
+.plan-editor-form > p,
+.plan-editor-form > .actions {
+  grid-column: 1 / -1;
+}
+.plan-time-options {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+.plan-editor .datetime-picker {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  margin: 0;
+}
+.plan-time-range {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.plan-end-placeholder {
+  visibility: hidden;
+}
+.plan-editor .datetime-picker legend {
+  margin-bottom: 4px;
+}
+.plan-editor .picker-date {
+  align-self: start;
+  padding: 12px;
+}
+.plan-editor .picker-calendar {
+  grid-column: 1 / -1;
+}
+.plan-editor .picker-time {
+  margin: 0;
+  padding: 8px;
+}
+.plan-editor .picker-time-fields {
+  gap: 8px;
+}
+.plan-editor .plan-end-time > p {
+  margin: 0 0 4px;
+  font-size: 12px;
+}
+.plan-editor .plan-members,
+.plan-editor .reminder-timing {
+  margin: 0;
+  padding: 8px 10px;
+  min-width: 0;
+}
+.plan-editor .plan-members {
+  grid-column: 1 / -1;
+  display: flex;
+  align-content: flex-start;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+}
+.plan-editor .plan-members .check {
+  min-height: 32px;
+}
+.plan-editor .hint {
+  margin: 0;
+}
+.plan-repeat-control {
+  display: grid;
+  align-self: start;
+  gap: 5px;
+  font-size: 14px;
+}
+.plan-repeat-control button {
+  text-align: left;
+}
+.plan-editor-form > .actions {
+  flex-wrap: wrap;
+}
+.repeat-editor {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+}
+.repeat-editor::backdrop {
+  background: #18251e88;
+}
+.repeat-frequencies {
+  border: 0;
+  margin: 12px 0;
+  padding: 0;
+  min-width: 0;
+}
+.repeat-frequency-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+.repeat-frequency-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  cursor: pointer;
+}
+.repeat-frequency-option:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--background);
+}
+.repeat-frequency-option input {
+  width: 18px;
+  height: 18px;
+  min-height: 0;
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: var(--accent);
+}
+
+/* One motion language for screen changes and newly opened controls. Fade
+   popup surfaces without transforming them: transformed ancestors would
+   change the positioning of fixed keyboards inside native dialogs. */
+@keyframes hub-content-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.app > main > .panel,
+.app > main > .hub-overview,
+.app > main > .customize,
+.customize [role='tabpanel'] > *,
+.sports-results,
+.family-setup,
+.reminder-center,
+.editor,
+.picker-time,
+.repeat-weekdays,
+.plan-end-time:not(.plan-end-placeholder),
+.picker-calendar,
+.shared-select-menu:not([hidden]),
+.touch-keyboard,
+dialog[open],
+.overlay {
+  animation: hub-content-enter 350ms ease-in-out;
+}
+dialog[open]::backdrop {
+  animation: hub-content-enter 350ms ease-in-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .app > main > .panel,
+  .app > main > .hub-overview,
+  .app > main > .customize,
+  .customize [role='tabpanel'] > *,
+  .sports-results,
+  .family-setup,
+  .reminder-center,
+  .editor,
+  .picker-time,
+  .repeat-weekdays,
+  .plan-end-time:not(.plan-end-placeholder),
+  .picker-calendar,
+  .shared-select-menu:not([hidden]),
+  .touch-keyboard,
+  dialog[open],
+  dialog[open]::backdrop,
+  .overlay {
+    animation: none;
+  }
+}
+@media (max-width: 650px) {
+  .plan-editor-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .plan-editor .datetime-picker {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .plan-time-range {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.app.touch-keyboard-open > main {
+  padding-bottom: calc(var(--touch-keyboard-height, 320px) + 24px);
+}
+dialog.touch-keyboard-host {
+  max-height: calc(100dvh - var(--touch-keyboard-height, 320px) - 32px);
+  margin-top: 16px;
+  margin-bottom: calc(var(--touch-keyboard-height, 320px) + 16px);
+}
+.overlay.touch-keyboard-overlay {
+  padding-bottom: calc(var(--touch-keyboard-height, 320px) + 16px);
+}
+.overlay.touch-keyboard-overlay > .dialog {
+  max-height: calc(100dvh - var(--touch-keyboard-height, 320px) - 40px);
+}
+@media (max-width: 650px) {
+  .touch-keyboard {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  .touch-keyboard-row {
+    gap: 3px;
+  }
+  .touch-keyboard-actions button {
+    padding: 6px;
+    font-size: 13px;
   }
 }

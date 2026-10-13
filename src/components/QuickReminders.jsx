@@ -3,10 +3,9 @@ import { Select } from './Select.jsx';
 
 const presets = [
   ['Laundry', 'Time to move the laundry to the dryer.', 60],
-  ['Dryer', 'Time to take out and fold the laundry.', 45],
+  ['Dryer', 'Time to take out and fold the laundry.', 60],
   ['Dishwasher', 'Time to check and empty the dishwasher.', 120],
   ['Oven check', 'Time to check the food in the oven.', 20],
-  ['Water plants', 'Time to water the plants.', 30],
 ];
 
 function ReminderWindow({ onClose, children }) {
@@ -45,8 +44,8 @@ export function QuickReminders({ repository }) {
   const [open, setOpen] = useState(false);
   const [data, setData] = useState({ items: [], recipients: [] });
   const [draft, setDraft] = useState({
-    title: 'Time to move the laundry to the dryer.',
-    minutes: 60,
+    title: '',
+    minutes: '',
     delivery: 'telegram',
     recipient: 'household',
   });
@@ -55,6 +54,11 @@ export function QuickReminders({ repository }) {
   const [message, setMessage] = useState('');
   const seen = useRef(null);
   const active = useRef(false);
+  // Each visit starts a fresh custom reminder; presets still start immediately.
+  const openWindow = useCallback(() => {
+    setDraft({ title: '', minutes: '', delivery: 'telegram', recipient: 'household' });
+    setOpen(true);
+  }, []);
   const refresh = useCallback(async () => {
     const value = await repository.request('quick-reminders');
     if (!active.current) return;
@@ -62,12 +66,12 @@ export function QuickReminders({ repository }) {
       (item) => item.delivery === 'screen' && item.status === 'completed',
     );
     if (seen.current && completed.some((item) => !seen.current.has(item.id))) {
-      setOpen(true);
+      openWindow();
       setMessage('Your timer is finished.');
     }
     seen.current = new Set(completed.map((item) => item.id));
     setData(value);
-  }, [repository]);
+  }, [repository, openWindow]);
   useEffect(() => {
     active.current = true;
     const load = () =>
@@ -115,7 +119,12 @@ export function QuickReminders({ repository }) {
     .slice(0, 5);
   return (
     <>
-      <button onClick={() => setOpen(true)}>
+      <button
+        onClick={() => {
+          setMessage('');
+          openWindow();
+        }}
+      >
         Quick reminders {running.length ? `(${running.length})` : ''}
       </button>
       {open && (
@@ -153,6 +162,7 @@ export function QuickReminders({ repository }) {
                 required
                 maxLength={160}
                 disabled={busy}
+                placeholder="Time to move the laundry to the dryer."
                 value={draft.title}
                 onChange={(event) => setDraft({ ...draft, title: event.target.value })}
               />
@@ -166,8 +176,14 @@ export function QuickReminders({ repository }) {
                 max={1440}
                 step={1}
                 disabled={busy}
+                placeholder="e.g. 60"
                 value={draft.minutes}
-                onChange={(event) => setDraft({ ...draft, minutes: Number(event.target.value) })}
+                onChange={(event) =>
+                  setDraft({
+                    ...draft,
+                    minutes: event.target.value === '' ? '' : Number(event.target.value),
+                  })
+                }
               />
             </label>
             <label>
