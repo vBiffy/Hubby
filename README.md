@@ -315,7 +315,7 @@ standings. A failed conference lookup leaves All games and AP Top 25 available.
 ### Built-in touch keyboard
 
 Tap an editable text field to open the themed keyboard, or a numeric/phone field
-for the number pad. It works in setup, every tab, and popups. Use Shift, Symbols,
+for the number pad. It works in setup, every tab, and popups. Use Caps, Symbols,
 Space, Backspace, Clear, and Next; note fields also offer New line. Done, Close,
 or Escape dismisses the keyboard without saving or submitting the form. Tap the
 field again to reopen it. Physical keyboards continue to work.

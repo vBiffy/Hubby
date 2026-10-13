@@ -18,7 +18,7 @@ test('calendar, editor and reminder popup render without crashing', async () => 
     );
     assert.match(numberKeys, /Backspace/);
     assert.match(numberKeys, /Next/);
-    assert.doesNotMatch(numberKeys, /Shift|Space|New line/);
+    assert.doesNotMatch(numberKeys, /Caps|Space|New line/);
     const textKeys = renderToStaticMarkup(
       React.createElement(KeyboardKeys, {
         layout: 'text',
