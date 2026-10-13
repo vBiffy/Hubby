@@ -356,7 +356,7 @@ export function App({ repository }) {
             ['home', '⌂', 'Hub'],
             ['calendar', '▦', 'Calendar'],
             ['notes', '≡', 'Notes'],
-            ['groceries', '\u2637', 'Groceries'],
+            ['groceries', '\u{1F6D2}', 'Groceries'],
             ['weather', '\u2600', 'Weather'],
             ['sports', '\u26bd', 'Sports'],
             ['settings', '⚙', 'Customize'],
