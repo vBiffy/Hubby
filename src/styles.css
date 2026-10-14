@@ -431,14 +431,37 @@ textarea {
 }
 /* Checkboxes are compact controls; text-field sizing must not stretch them. */
 input[type='checkbox'] {
+  appearance: none;
+  -webkit-appearance: none;
   width: 22px;
   height: 22px;
   min-height: 22px;
-  flex: 0 0 22px;
+  flex: 0 0 auto;
   padding: 0;
   margin: 0;
   accent-color: var(--accent);
+  border: 2px solid var(--subtle);
+  border-radius: 50%;
+  background: var(--surface);
   cursor: pointer;
+}
+input[type='checkbox']:checked {
+  border-color: var(--accent);
+  background-image: radial-gradient(circle, var(--accent) 0 44%, transparent 48%);
+}
+/* A hollow dot distinguishes a partially selected Check all control. */
+input[type='checkbox']:indeterminate {
+  border-color: var(--accent);
+  background-image: radial-gradient(
+    circle,
+    transparent 0 20%,
+    var(--accent) 24% 42%,
+    transparent 46%
+  );
+}
+input[type='checkbox']:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 label.check {
@@ -925,6 +948,7 @@ input[type='color'] {
 }
 .repeat-day-option input {
   width: 20px;
+  height: 20px;
   min-height: 20px;
   accent-color: var(--accent);
 }
@@ -2303,6 +2327,9 @@ input[type='color'] {
   flex-wrap: wrap;
   gap: 8px;
 }
+.hub-header-actions {
+  flex-wrap: wrap;
+}
 
 /* Keep the sidebar at its expanded width while the grid column closes.
    Moving that fixed-width panel avoids squeezing or wrapping its labels. */
@@ -2541,6 +2568,11 @@ body:has(dialog[open], [aria-modal='true'], .touch-keyboard) .navigation-toggle 
 }
 .plan-editor .plan-members .check {
   min-height: 32px;
+  gap: 6px;
+}
+.plan-members .member-swatch {
+  margin-right: 0;
+  flex-shrink: 0;
 }
 .plan-editor .hint {
   margin: 0;
@@ -2602,6 +2634,104 @@ body:has(dialog[open], [aria-modal='true'], .touch-keyboard) .navigation-toggle 
   margin: 0;
   flex-shrink: 0;
   accent-color: var(--accent);
+}
+
+/* Chores reuse household colors while retaining a separate task board. */
+.chore-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.chore-family-track {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 12px;
+  animation: chore-view-enter 350ms ease-in-out;
+}
+.chore-person {
+  flex: 0 0 300px;
+  max-width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 16px;
+  scroll-snap-align: start;
+}
+.chore-person h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.chore-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.chore-row .check {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+.chore-row strong {
+  overflow-wrap: anywhere;
+}
+.chore-row small {
+  display: block;
+  color: var(--subtle);
+  margin-top: 4px;
+}
+.chore-row > p {
+  width: 100%;
+  margin: 0;
+}
+.chore-overdue small {
+  color: #b04444;
+}
+.dark .chore-overdue small {
+  color: #ffb2a6;
+}
+.chore-editor {
+  width: min(640px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+}
+.chore-editor::backdrop {
+  background: #18251e88;
+}
+.chore-editor-fields {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.chore-editor .actions {
+  flex-wrap: wrap;
+}
+
+@keyframes chore-view-enter {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes touch-keyboard-enter {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 24px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
 
 /* One motion language for screen changes and newly opened controls. Fade
@@ -2693,5 +2823,108 @@ dialog.touch-keyboard-host {
   .touch-keyboard-actions button {
     padding: 6px;
     font-size: 13px;
+  }
+}
+
+/* Override the general popup fade with a keyboard-specific slide. */
+.touch-keyboard {
+  animation: touch-keyboard-enter 500ms ease-in-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .touch-keyboard,
+  .chore-family-track {
+    animation: none;
+  }
+}
+
+/* Celebrations do not block touch controls or move the current screen. */
+.chore-celebration {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+}
+.chore-confetti {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.chore-confetti i {
+  position: absolute;
+  top: -16px;
+  width: 8px;
+  height: 12px;
+  border-radius: 2px;
+  opacity: 0;
+  animation: chore-confetti-fall 2500ms ease-in var(--confetti-delay) forwards;
+}
+@keyframes chore-confetti-fall {
+  0% {
+    opacity: 0;
+    transform: translate(0, -20px) rotate(0);
+  }
+  8% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--confetti-drift), calc(100dvh + 30px)) rotate(var(--confetti-spin));
+  }
+}
+.chore-celebration-message {
+  position: absolute;
+  left: 50%;
+  top: 18%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100% - 32px);
+  padding: 20px 28px;
+  background: var(--surface);
+  color: var(--ink);
+  border: 2px solid var(--accent);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px #0002;
+  text-align: center;
+  animation: chore-praise 3000ms ease-in-out forwards;
+}
+.chore-celebration-message strong {
+  display: block;
+  font-size: clamp(20px, 3vw, 30px);
+  margin-bottom: 6px;
+}
+@keyframes chore-praise {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  12%,
+  85% {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chore-confetti {
+    display: none;
+  }
+  .chore-celebration-message {
+    animation: none;
+  }
+}
+
+/* Custom plan overlays use grid positioning; animate the space reserved for
+   the keyboard so their window moves smoothly too. Native dialogs use margins. */
+.overlay {
+  transition: padding-bottom 500ms ease-in-out;
+}
+.overlay > .dialog {
+  transition: max-height 500ms ease-in-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .overlay > .dialog {
+    transition: none;
   }
 }

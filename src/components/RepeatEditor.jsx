@@ -35,6 +35,7 @@ export function RepeatEditor({ draft, weekStart = 0, onApply, onCancel }) {
       aria-labelledby={id}
       onCancel={(event) => {
         event.preventDefault();
+        event.stopPropagation();
         onCancel();
       }}
     >

@@ -1,3 +1,5 @@
+import { ChoreRow } from './Chores.jsx';
+import { activeChores } from '../../shared/chores.js';
 import { QuickReminders } from './QuickReminders.jsx';
 import { SportsCalendarDialog } from './SportsCalendar.jsx';
 import { HubNotes } from './HubNotes.jsx';
@@ -24,6 +26,8 @@ const timeLabel = (item) =>
 // The hub is a glanceable overview. Full lists and editing stay in their feature screens.
 export function HubOverview({
   items,
+  chores = [],
+  onSaveChore,
   notes,
   members,
   showAgenda,
@@ -59,6 +63,8 @@ export function HubOverview({
   const selected = days.some((day) => dateKey(day) === picked) ? picked : today;
   // Day dots and cards describe household plans only.
   const plans = entries.filter((item) => occursOnDay(item, selected));
+  const dayChores = activeChores(chores, selected);
+  const dayCount = plans.length + dayChores.length;
   const people = [{ id: 'everyone', title: 'Everyone', color: null }, ...members];
   const selectedPerson = members.some((member) => member.id === person) ? person : 'everyone';
   const visiblePeople = members.filter(
@@ -96,7 +102,10 @@ export function HubOverview({
         <div className="hub-day-strip" role="group" aria-label="Choose a day">
           {days.map((day) => {
             const key = dateKey(day);
-            const dayPlans = entries.filter((item) => occursOnDay(item, key));
+            const dayPlans = [
+              ...entries.filter((item) => occursOnDay(item, key)),
+              ...activeChores(chores, key),
+            ];
             return (
               <button
                 key={key}
@@ -112,7 +121,10 @@ export function HubOverview({
                 <strong>{day.getDate()}</strong>
                 <span className="hub-day-dots" aria-hidden="true">
                   {dayPlans.slice(0, 3).map((item) => (
-                    <i key={item.occurrenceKey} style={planStyle(item, members)} />
+                    <i
+                      key={item.occurrenceKey || `${item.id}:${item.occurrenceDate || ''}`}
+                      style={planStyle(item, members)}
+                    />
                   ))}
                   {dayPlans.length > 3 && <small>+{dayPlans.length - 3}</small>}
                 </span>
@@ -133,8 +145,8 @@ export function HubOverview({
                     })}
               </h2>
               <p className="hub-day-summary">
-                {plans.length
-                  ? `${plans.length} ${plans.length === 1 ? 'plan' : 'plans'} for the day`
+                {dayCount
+                  ? `${dayCount} ${dayCount === 1 ? 'item' : 'items'} for the day`
                   : 'Your day at a glance'}
               </p>
             </div>
@@ -188,6 +200,7 @@ export function HubOverview({
                   !assignedMemberIds(item).length ||
                   assignedMemberIds(item).includes(member.id),
               );
+              const personalChores = dayChores.filter((item) => item.memberId === member.id);
               return (
                 <section
                   className="hub-person-day"
@@ -204,9 +217,7 @@ export function HubOverview({
                       {member.id === 'everyone' ? 'All' : member.title.slice(0, 1).toUpperCase()}
                     </span>
                     <h3>{member.title}</h3>
-                    <span className="hint">
-                      {personal.length} {personal.length === 1 ? 'plan' : 'plans'}
-                    </span>
+                    <span className="hint">{personal.length + personalChores.length} items</span>
                   </div>
                   <div
                     className="hub-plan-list"
@@ -234,7 +245,17 @@ export function HubOverview({
                         </span>
                       </button>
                     ))}
-                    {!personal.length && <p className="empty">Nothing planned for this day.</p>}
+                    {personalChores.map((item) => (
+                      <ChoreRow
+                        key={`${item.id}:${item.occurrenceDate || 'single'}`}
+                        item={item}
+                        day={selected}
+                        onSave={onSaveChore}
+                      />
+                    ))}
+                    {!personal.length && !personalChores.length && (
+                      <p className="empty">Nothing planned for this day.</p>
+                    )}
                   </div>
                 </section>
               );

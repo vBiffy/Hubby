@@ -42,7 +42,7 @@ test('calendar, editor and reminder popup render without crashing', async () => 
       }),
     );
     assert.match(setup, /Add Mom, Dad, and Kid for testing/);
-    assert.match(setup, /disabled=""[^>]*>Continue to kitchen/);
+    assert.match(setup, /disabled=""[^>]*>Continue to Hubby/);
     assert.doesNotMatch(setup, /<select/);
     const { Calendar } = await vite.ssrLoadModule('/src/components/Calendar.jsx');
     const props = { weekStart: 0, onSelect() {}, onEdit() {} };
@@ -268,6 +268,62 @@ test('calendar, editor and reminder popup render without crashing', async () => 
     assert.doesNotMatch(favoriteSettings, /Your hub, your way/);
 
     const { HubOverview } = await vite.ssrLoadModule('/src/components/HubOverview.jsx');
+    const { Chores, ChoreEditor } = await vite.ssrLoadModule('/src/components/Chores.jsx');
+    const choreMembers = [
+      { id: 'mom', title: 'Mom', color: '#a64b78' },
+      { id: 'dad', title: 'Dad', color: '#326d9c' },
+    ];
+    const choreItems = [
+      {
+        id: 'chore',
+        title: 'Wash dishes',
+        memberId: 'mom',
+        startsOn: '2026-10-08',
+        dueOn: '2026-10-09',
+        done: false,
+      },
+    ];
+    const board = renderToStaticMarkup(
+      React.createElement(Chores, {
+        repository: {},
+        items: choreItems,
+        members: choreMembers,
+        onSave() {},
+        onDelete() {},
+        now: new Date('2026-10-10T12:00Z'),
+      }),
+    );
+    assert.match(board, /Family chores/);
+    assert.match(board, /Take out the trash/);
+    assert.match(board, /Overdue since 2026-10-09/);
+    const recurringEditor = renderToStaticMarkup(
+      React.createElement(ChoreEditor, {
+        item: { ...choreItems[0], repeat: 'daily', timeOfDay: '17:00', missedPolicy: 'skip' },
+        members: choreMembers,
+        configured: true,
+        onSave() {},
+        onClose() {},
+      }),
+    );
+    assert.match(recurringEditor, /First occurrence and scheduled time/);
+    assert.match(recurringEditor, /Forget it when the next day starts/);
+    assert.match(recurringEditor, /mark overdue the next morning/);
+    assert.doesNotMatch(recurringEditor, /Set a due date|Telegram reminder time/);
+
+    const choresOnHub = renderToStaticMarkup(
+      React.createElement(HubOverview, {
+        items: [],
+        notes: [],
+        chores: choreItems,
+        members: choreMembers,
+        showAgenda: true,
+        showNotes: false,
+        onSaveChore() {},
+        now: new Date('2026-10-10T12:00Z'),
+      }),
+    );
+    assert.equal((choresOnHub.match(/Wash dishes/g) || []).length, 2);
+    assert.match(choresOnHub, /Complete Wash dishes/);
     const hub = renderToStaticMarkup(
       React.createElement(HubOverview, {
         items: [

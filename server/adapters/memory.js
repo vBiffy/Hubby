@@ -8,6 +8,7 @@ export function createMemoryRepository() {
     groceries: new Map(),
     members: new Map(),
     quickReminders: new Map(),
+    chores: new Map(),
   };
   return {
     async list(kind) {

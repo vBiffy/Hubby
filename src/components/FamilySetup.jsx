@@ -58,7 +58,7 @@ export function FamilySetup({ members, onSave, onContinue }) {
           {busy ? 'Adding family...' : 'Add Mom, Dad, and Kid for testing'}
         </button>
         <button className="primary" disabled={busy || !members.length} onClick={onContinue}>
-          Continue to kitchen
+          Continue to Hubby
         </button>
       </div>
     </main>

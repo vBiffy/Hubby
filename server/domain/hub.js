@@ -266,6 +266,11 @@ export function createHub(repository) {
       checkKind(kind);
       if (kind === 'members') {
         const events = await repository.list('events');
+        if ((await repository.list('chores')).some((item) => item.memberId === id)) {
+          throw new ValidationError(
+            'Reassign or delete this member’s chores before deleting them.',
+          );
+        }
         if (
           events.some(
             (event) =>

@@ -1,7 +1,9 @@
+import { Chores, AddChoreButton } from './components/Chores.jsx';
+import { ChoreCelebration, celebrationPhrases } from './components/ChoreCelebration.jsx';
 import { TouchKeyboard } from './components/TouchKeyboard.jsx';
 import { useAnimatedWindows } from './hooks/useAnimatedWindows.js';
 import { FamilySetup } from './components/FamilySetup.jsx';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Groceries } from './components/Groceries.jsx';
 import { Agenda } from './components/Agenda.jsx';
 import { Notes } from './components/Notes.jsx';
@@ -34,6 +36,7 @@ function calendarConflicts(draft, items) {
 }
 const pageTitles = {
   calendar: 'A little planning goes a long way',
+  chores: 'Everyone lends a hand',
   notes: 'The family notebook',
   groceries: 'Stock up on the little things',
   weather: 'A look outside',
@@ -72,6 +75,13 @@ export function App({ repository }) {
   const weatherProps = useWeather(repository);
   const [tab, setTab] = useState(location.hash.slice(1).split('?')[0] || 'home');
   const [settings, setSettings] = useState(readSettings);
+  const [celebration, setCelebration] = useState(null);
+  const celebrationIndex = useRef(0);
+  useEffect(() => {
+    if (!celebration) return;
+    const timer = setTimeout(() => setCelebration(null), 3000);
+    return () => clearTimeout(timer);
+  }, [celebration]);
   const [navigationOpen, setNavigationOpen] = useState(true);
   // Calendar inclusion is opt-in and independent of favorite sorting in Sports.
   const calendarTeams = Object.fromEntries(
@@ -81,7 +91,13 @@ export function App({ repository }) {
     ]),
   );
   const sportsCalendar = useSportsCalendar(repository, calendarTeams);
-  const [data, setData] = useState({ notes: [], events: [], groceries: [], members: [] });
+  const [data, setData] = useState({
+    notes: [],
+    events: [],
+    groceries: [],
+    members: [],
+    chores: [],
+  });
   const [loaded, setLoaded] = useState(false);
   const [settingUp, setSettingUp] = useState(false);
   const calendarEvents = data.events.filter((item) => !item.sportsSource);
@@ -142,15 +158,16 @@ export function App({ repository }) {
     let active = true;
     async function load() {
       try {
-        const [notes, events, groceries, members, health] = await Promise.all([
+        const [notes, events, groceries, members, chores, health] = await Promise.all([
           repository.list('notes'),
           repository.list('events'),
           repository.list('groceries'),
           repository.list('members'),
+          repository.list('chores'),
           repository.request('health'),
         ]);
         if (active) {
-          setData({ notes, events, groceries, members });
+          setData({ notes, events, groceries, members, chores });
           setLoaded(true);
           if (!members.length) setSettingUp(true);
           setStatus(
@@ -185,6 +202,36 @@ export function App({ repository }) {
   async function remove(kind, id) {
     await repository.remove(kind, id);
     setData((previous) => ({ ...previous, [kind]: previous[kind].filter((x) => x.id !== id) }));
+  }
+  async function saveChore(item) {
+    const previous = data.chores.find((chore) => chore.id === item.id);
+    let saved;
+    if (item.occurrenceDate) {
+      saved = await repository.request(`chores/${item.id}/occurrences/${item.occurrenceDate}`, {
+        method: 'PUT',
+        body: JSON.stringify({ done: item.done }),
+      });
+      setData((current) => ({
+        ...current,
+        chores: current.chores.map((chore) => (chore.id === saved.id ? saved : chore)),
+      }));
+    } else {
+      saved = await save('chores', item);
+    }
+    // Celebrate only a successful incomplete-to-complete change made here,
+    // never a background refresh, edit, reopen, or rejected write.
+    const wasDone = item.occurrenceDate
+      ? previous?.completedDates?.includes(item.occurrenceDate)
+      : previous?.done;
+    if ((item.occurrenceDate ? item.done : saved.done) && previous && !wasDone) {
+      const index = celebrationIndex.current++;
+      setCelebration({
+        id: index,
+        phrase: celebrationPhrases[index % celebrationPhrases.length],
+        member: data.members.find((member) => member.id === saved.memberId)?.title,
+      });
+    }
+    return saved;
   }
   async function moveEvent(occurrence, day) {
     const series = data.events.find((event) => event.id === occurrence.id);
@@ -355,6 +402,7 @@ export function App({ repository }) {
           {[
             ['home', '⌂', 'Hub'],
             ['calendar', '▦', 'Calendar'],
+            ['chores', '\u2611', 'Chores'],
             ['notes', '≡', 'Notes'],
             ['groceries', '\u{1F6D2}', 'Groceries'],
             ['weather', '\u2600', 'Weather'],
@@ -394,11 +442,19 @@ export function App({ repository }) {
             </p>
             <h1>{tab === 'home' ? settings.name : pageTitles[tab] || pageTitles.calendar}</h1>
           </div>
-          {tab === 'home' && <WeatherSummary {...weatherProps} />}
+          {['home', 'chores'].includes(tab) && <WeatherSummary {...weatherProps} />}
           {tab === 'home' && (
-            <button className="primary" onClick={() => editEvent(null)}>
-              + Add a plan
-            </button>
+            <div className="actions hub-header-actions">
+              <button className="primary" onClick={() => editEvent(null)}>
+                + Add a plan
+              </button>
+              <AddChoreButton
+                repository={repository}
+                members={data.members}
+                onSave={saveChore}
+                now={clock}
+              />
+            </div>
           )}
           <time>
             {clock.toLocaleTimeString(undefined, {
@@ -421,6 +477,8 @@ export function App({ repository }) {
             sportsError={sportsCalendar.error}
             weekStart={Number(settings.weekStart)}
             notes={data.notes}
+            chores={data.chores}
+            onSaveChore={saveChore}
             onSaveNote={notesProps.onSave}
             onDeleteNote={notesProps.onDelete}
             members={data.members}
@@ -442,6 +500,16 @@ export function App({ repository }) {
             />
             <Agenda {...agendaProps} />
           </>
+        )}
+        {tab === 'chores' && (
+          <Chores
+            repository={repository}
+            items={data.chores}
+            members={data.members}
+            onSave={saveChore}
+            onDelete={(id) => remove('chores', id)}
+            now={clock}
+          />
         )}
         {tab === 'weather' && <Weather {...weatherProps} />}
         {tab === 'sports' && (
@@ -475,9 +543,16 @@ export function App({ repository }) {
           />
         )}
 
-        {!['home', 'calendar', 'notes', 'groceries', 'weather', 'sports', 'settings'].includes(
-          tab,
-        ) && (
+        {![
+          'home',
+          'calendar',
+          'chores',
+          'notes',
+          'groceries',
+          'weather',
+          'sports',
+          'settings',
+        ].includes(tab) && (
           <p>
             View not found. <a href="#home">Go home</a>
           </p>
@@ -545,6 +620,7 @@ export function App({ repository }) {
         </div>
       )}
       {!draft && !details && <ReminderCenter {...reminderProps} members={data.members} />}
+      <ChoreCelebration celebration={celebration} />
     </div>
   );
 }

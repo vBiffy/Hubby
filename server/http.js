@@ -26,6 +26,7 @@ export function createApp(
   sports,
   groceryText,
   quickReminders,
+  chores,
 ) {
   const app = express();
   app.disable('x-powered-by');
@@ -79,6 +80,26 @@ export function createApp(
   app.delete('/api/quick-reminders/:id', async (req, res) => {
     if (!quickReminders) throw new ValidationError('Quick reminders are not configured.');
     await quickReminders.cancel(req.params.id);
+    res.sendStatus(204);
+  });
+  // Chores have their own use cases; they never become calendar records.
+  app.get('/api/chores/configuration', (req, res) =>
+    res.json(chores?.configuration() || { configured: false }),
+  );
+  app.use('/api/chores', (req, res, next) => {
+    if (!chores) throw new ValidationError('Chores are not configured.');
+    next();
+  });
+  app.get('/api/chores', async (req, res) => res.json(await chores.list()));
+  app.post('/api/chores', async (req, res) => res.status(201).json(await chores.save(req.body)));
+  app.put('/api/chores/:id', async (req, res) =>
+    res.json(await chores.save(req.body, req.params.id)),
+  );
+  app.put('/api/chores/:id/occurrences/:day', async (req, res) =>
+    res.json(await chores.completeOccurrence(req.params.id, req.params.day, req.body?.done)),
+  );
+  app.delete('/api/chores/:id', async (req, res) => {
+    await chores.remove(req.params.id);
     res.sendStatus(204);
   });
   app.get('/api/:kind', async (req, res) => res.json(await hub.list(req.params.kind)));

@@ -93,7 +93,66 @@ export function TouchKeyboard() {
   const numericDraft = useRef('');
   const replaceNumber = useRef(false);
   const keyboard = useRef(null);
-  const close = useCallback(() => setField(null), []);
+  const windowMotion = useRef(null);
+  const moveWindow = useCallback((element, change, duration) => {
+    const before = element?.getBoundingClientRect();
+    windowMotion.current?.cancel();
+    change();
+    if (
+      !element?.isConnected ||
+      !element.open ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    )
+      return;
+    const after = element.getBoundingClientRect();
+    // Animate margins, not transforms: a transformed dialog would also move
+    // the fixed keyboard inside its native modal layer.
+    windowMotion.current = element.animate(
+      [
+        { marginTop: `${before.top}px`, marginBottom: `${innerHeight - before.bottom}px` },
+        { marginTop: `${after.top}px`, marginBottom: `${innerHeight - after.bottom}px` },
+      ],
+      { duration, easing: 'ease-in-out' },
+    );
+  }, []);
+  const exitAnimation = useRef(null);
+  const close = useCallback(() => {
+    const element = keyboard.current;
+    const dialog = element?.closest('dialog');
+    if (
+      !element?.isConnected ||
+      (dialog && !dialog.open) ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
+      exitAnimation.current?.cancel();
+      exitAnimation.current = null;
+      setField(null);
+      return;
+    }
+    if (exitAnimation.current) return;
+    // Keep the keyboard mounted until its exit finishes. Disable interaction
+    // immediately so a fading key cannot modify a field after Done is pressed.
+    element.inert = true;
+    element.style.pointerEvents = 'none';
+    const style = getComputedStyle(element);
+    const animation = element.animate(
+      [
+        { opacity: style.opacity, transform: style.transform },
+        { opacity: 0, transform: 'translate(-50%, 24px)' },
+      ],
+      { duration: 400, easing: 'ease-in-out', fill: 'forwards' },
+    );
+    exitAnimation.current = animation;
+    animation.finished
+      .then(() => {
+        if (exitAnimation.current === animation) {
+          exitAnimation.current = null;
+          setField(null);
+        }
+      })
+      .catch(() => {});
+  }, []);
+  useEffect(() => () => exitAnimation.current?.cancel(), []);
   useEffect(() => {
     const focus = (event) => {
       if (event.target.closest('.touch-keyboard')) return;
@@ -104,7 +163,19 @@ export function TouchKeyboard() {
         readOnly: event.target.readOnly,
         keyboard: event.target.dataset?.keyboard,
       });
-      setField(layout ? event.target : null);
+      if (!layout) {
+        close();
+        return;
+      }
+      // A new field can interrupt dismissal without a delayed close removing
+      // the keyboard the user has just reopened.
+      exitAnimation.current?.cancel();
+      exitAnimation.current = null;
+      if (keyboard.current) {
+        keyboard.current.inert = false;
+        keyboard.current.style.pointerEvents = '';
+      }
+      setField(event.target);
       numericDraft.current = event.target.value || '';
       replaceNumber.current = event.target.dataset?.keyboardReplace === 'true';
       setNumericText(numericDraft.current);
@@ -147,14 +218,24 @@ export function TouchKeyboard() {
     const originalMode = field.getAttribute('inputmode');
     // Request no OS keyboard while ours is open; physical typing still works.
     field.setAttribute('inputmode', 'none');
-    app.classList.add('touch-keyboard-open');
-    dialog?.classList.add('touch-keyboard-host');
-    overlay?.classList.add('touch-keyboard-overlay');
-    const resize = new ResizeObserver(() => {
+    const reserveSpace = () => {
       const height = `${keyboard.current.getBoundingClientRect().height}px`;
       app.style.setProperty('--touch-keyboard-height', height);
       dialog?.style.setProperty('--touch-keyboard-height', height);
       overlay?.style.setProperty('--touch-keyboard-height', height);
+    };
+    moveWindow(
+      dialog,
+      () => {
+        reserveSpace();
+        app.classList.add('touch-keyboard-open');
+        dialog?.classList.add('touch-keyboard-host');
+        overlay?.classList.add('touch-keyboard-overlay');
+      },
+      500,
+    );
+    const resize = new ResizeObserver(() => {
+      reserveSpace();
       field.scrollIntoView({ block: 'center', behavior: 'smooth' });
     });
     resize.observe(keyboard.current);
@@ -173,14 +254,20 @@ export function TouchKeyboard() {
       removed.disconnect();
       if (originalMode === null) field.removeAttribute('inputmode');
       else field.setAttribute('inputmode', originalMode);
-      app.classList.remove('touch-keyboard-open');
-      app.style.removeProperty('--touch-keyboard-height');
-      dialog?.classList.remove('touch-keyboard-host');
-      dialog?.style.removeProperty('--touch-keyboard-height');
-      overlay?.classList.remove('touch-keyboard-overlay');
-      overlay?.style.removeProperty('--touch-keyboard-height');
+      moveWindow(
+        dialog,
+        () => {
+          app.classList.remove('touch-keyboard-open');
+          app.style.removeProperty('--touch-keyboard-height');
+          dialog?.classList.remove('touch-keyboard-host');
+          dialog?.style.removeProperty('--touch-keyboard-height');
+          overlay?.classList.remove('touch-keyboard-overlay');
+          overlay?.style.removeProperty('--touch-keyboard-height');
+        },
+        400,
+      );
     };
-  }, [field, close]);
+  }, [field, close, moveWindow]);
 
   if (!field) return null;
   const layout = keyboardLayout({ tagName: field.tagName, type: field.type });

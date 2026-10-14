@@ -193,7 +193,7 @@ use the shared themed `ConfirmDialog` through `DeleteButton` instead of browser 
 
 The kitchen shell waits for its initial data load. If no family members exist,
 setup is required before any feature can be used, including direct tab links.
-Add at least one member with a unique color, then choose **Continue to kitchen**.
+Add at least one member with a unique color, then choose **Continue to Hubby**.
 The testing shortcut saves **Mom**, **Dad**, and **Kid** through the normal member API.
 Removing the last member brings setup back. Failed initial connections offer retry;
 they do not assume the family is empty. Memory-mode demo members reset on server restart.
@@ -352,3 +352,53 @@ at the same pace, and the Hub's family/day selection adds a small slide. Reduced
 motion preferences disable these transitions. Adjust `hub-content-enter` in
 `src/styles.css` for opening animations and `src/hooks/useAnimatedWindows.js`
 for popup resizing.
+
+### Chores
+
+**Chores** sits below Calendar in navigation. Presets open an assignment window
+with the title filled in; choose a household member and save. Custom chores
+support instructions, a start day, an optional due date, and an optional one-time
+Telegram reminder. The board shows a card for each family member, with filters
+and a completed-items toggle. Completed chores can be unchecked to reopen them.
+
+From the start day onward, incomplete chores appear in their owner's Hub day
+until completed. Due dates mark overdue work; they do not make unfinished work
+disappear. Future chores remain visible on the Chores board. Chores never appear
+on the household calendar or create calendar reminders.
+
+Telegram uses the same bot and fixed household chat as groceries and quick
+reminders. Messages identify the chore's owner. Completion before a delivery
+claim prevents sending. Messages are claimed before delivery, and failed or
+uncertain deliveries are not automatically retried. Change the reminder time to
+schedule a new message. The API must stay running; the browser can be closed.
+
+PostgreSQL installations need `npm run db:migrate` to allow the new `chores`
+storage kind, then restart the API. Memory mode needs only an API restart and
+loses chores on restart. No automatic migration is enabled.
+
+### Recurring chores and missed occurrences
+
+In the assignment window, choose **Repeat** for daily, weekly, custom weekdays,
+monthly, or yearly schedules. Set the first day and its 12-hour scheduled time;
+optional end dates are available in Repeat settings. Each occurrence is completed
+individually without completing the recurring series or changing calendar data.
+
+**When an occurrence is missed** offers two policies:
+
+- **Keep it and mark overdue the next morning:** unfinished occurrences stay in
+  the owner's Hub day and Chores board, labeled with their original date/time.
+- **Forget it when the next day starts:** unfinished occurrences disappear at
+  midnight Lansing time. They never become overdue; completed history remains.
+
+The **Scoop litter** preset defaults to daily at **5 PM** with the forget policy.
+For trash collection, choose your weekday/time and the keep policy. The next
+morning, an unfinished occurrence is marked overdue separately from the next
+scheduled occurrence. Completed occurrences can be reopened, except after their
+forget-policy day has expired. **Edit** changes the series settings.
+
+Optional recurring Telegram reminders send at the scheduled time using the
+existing household chat and Lansing timezone, including daylight-saving changes.
+Completed or expired occurrences are skipped. After server downtime, only the
+most recent eligible occurrence may send; prior overdue chores remain visible.
+Claimed/failed messages are not automatically retried. Recurrence fields use the
+existing chore JSON records, so no additional database migration is required.

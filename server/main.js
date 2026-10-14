@@ -1,3 +1,4 @@
+import { createChores } from './domain/chores.js';
 import { createQuickReminders } from './domain/quickReminders.js';
 import { createGroceryText } from './domain/groceryText.js';
 import { createTelegram } from './adapters/telegram.js';
@@ -24,18 +25,21 @@ else console.warn('Memory demo: changes will be lost on restart.');
 const repo = pool ? createPostgresRepository(pool) : createMemoryRepository();
 const hub = createHub(repo);
 const telegram = createTelegram();
+const chores = createChores(repo, telegram);
 const quickReminders = createQuickReminders(repo, {
   household: telegram,
 });
 // Local scheduler checks stored deadlines; it does not poll Telegram for messages.
 const reminderTimer = setInterval(
   () =>
-    quickReminders
-      .tick()
-      .catch(() => console.warn('Quick reminder scheduler unavailable; checking again shortly.')),
+    Promise.all([quickReminders.tick(), chores.tick()]).catch(() =>
+      console.warn('Reminder scheduler unavailable; checking again shortly.'),
+    ),
   5000,
 );
-quickReminders.tick().catch(() => console.warn('Quick reminder scheduler unavailable.'));
+Promise.all([quickReminders.tick(), chores.tick()]).catch(() =>
+  console.warn('Reminder scheduler unavailable.'),
+);
 const weather = createWeather(createOpenMeteo());
 const server = createApp(
   hub,
@@ -47,6 +51,7 @@ const server = createApp(
   createSports(createEspn()),
   createGroceryText(hub, telegram),
   quickReminders,
+  chores,
 ).listen(process.env.PORT || 3001, process.env.HOST || '127.0.0.1', () =>
   console.log('Hubby API ready on port', process.env.PORT || 3001),
 );
