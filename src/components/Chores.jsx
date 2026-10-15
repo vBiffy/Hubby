@@ -10,16 +10,15 @@ import {
   choreStatus,
   chorePresets,
   choreOccurrence,
+  isChoreOverdue,
 } from '../../shared/chores.js';
 
 // Reused on the chore board and the Hub; completing a task never edits a plan.
-export function ChoreRow({ item, day, onSave, onEdit }) {
+export function ChoreRow({ item, today = choreDay(), onSave, onEdit }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   return (
-    <div
-      className={`chore-row ${item.dueOn && item.dueOn < day && !item.done ? 'chore-overdue' : ''}`}
-    >
+    <div className={`chore-row ${isChoreOverdue(item, today) ? 'chore-overdue' : ''}`}>
       <label className="check">
         <input
           type="checkbox"
@@ -27,7 +26,7 @@ export function ChoreRow({ item, day, onSave, onEdit }) {
           disabled={
             busy ||
             (item.repeat && item.repeat !== 'none' && !item.occurrenceDate) ||
-            (item.missedPolicy === 'skip' && item.occurrenceDate < day)
+            (item.missedPolicy === 'skip' && item.occurrenceDate < today)
           }
           aria-label={`Complete ${item.title}`}
           onChange={async (event) => {
@@ -44,7 +43,7 @@ export function ChoreRow({ item, day, onSave, onEdit }) {
         />
         <span>
           <strong>{item.title}</strong>
-          <small>{choreStatus(item, day)}</small>
+          <small>{choreStatus(item, today)}</small>
         </span>
       </label>
       {onEdit && (
@@ -441,7 +440,7 @@ export function Chores({ repository, items, members, onSave, onDelete, now = new
                   <ChoreRow
                     key={`${item.id}:${item.occurrenceDate || 'single'}`}
                     item={item}
-                    day={today}
+                    today={today}
                     onSave={onSave}
                     onEdit={edit}
                   />

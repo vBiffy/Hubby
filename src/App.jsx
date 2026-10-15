@@ -369,7 +369,7 @@ export function App({ repository }) {
         <TouchKeyboard />
         {!loaded ? (
           <main className="family-setup">
-            <h1>Connecting to your kitchen</h1>
+            <h1>Connecting to your hubby</h1>
             <p role="status">{error || 'Loading family members...'}</p>
             {error && <button onClick={() => location.reload()}>Try again</button>}
           </main>
@@ -393,7 +393,10 @@ export function App({ repository }) {
       <TouchKeyboard />
       <aside id="app-navigation" inert={!navigationOpen}>
         <a className="brand" href="#home">
-          <span className="brand-icon">h.</span>hubby
+          <span className="brand-icon">
+            <span>h.</span>
+          </span>
+          hubby
         </a>
         <p className="eyebrow" style={{ fontSize: '9px' }}>
           A LITTLE MORE, TOGETHER

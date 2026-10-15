@@ -3,6 +3,7 @@ import { createQuickReminders } from './domain/quickReminders.js';
 import { createGroceryText } from './domain/groceryText.js';
 import { createTelegram } from './adapters/telegram.js';
 import pg from 'pg';
+import { initializeDatabase, databaseErrorMessage } from './database.js';
 import { createHub } from './domain/hub.js';
 import { createMemoryRepository } from './adapters/memory.js';
 import { createPostgresRepository } from './adapters/postgres.js';
@@ -20,8 +21,14 @@ if (storage === 'postgres' && !process.env.DATABASE_URL)
   throw new Error('Set DATABASE_URL or use STORAGE=memory for a temporary demo.');
 const pool =
   storage === 'postgres' ? new pg.Pool({ connectionString: process.env.DATABASE_URL }) : null;
-if (pool) await pool.query('SELECT 1 FROM hub_items LIMIT 1');
-else console.warn('Memory demo: changes will be lost on restart.');
+if (pool) {
+  try {
+    await initializeDatabase(pool);
+  } catch (error) {
+    await pool.end();
+    throw new Error(databaseErrorMessage(error));
+  }
+} else console.warn('Memory demo: changes will be lost on restart.');
 const repo = pool ? createPostgresRepository(pool) : createMemoryRepository();
 const hub = createHub(repo);
 const telegram = createTelegram();

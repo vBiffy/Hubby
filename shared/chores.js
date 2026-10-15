@@ -68,18 +68,23 @@ export function activeChores(items, day) {
     );
 }
 
-export function choreStatus(item, day) {
+// Viewing a future day changes visibility, never the real overdue deadline.
+export function isChoreOverdue(item, today = choreDay()) {
+  return Boolean(!item.done && item.dueOn && item.dueOn < today);
+}
+
+export function choreStatus(item, day = choreDay()) {
   if (item.done) return item.occurrenceDate ? `Completed ${item.occurrenceDate}` : 'Completed';
   if (item.occurrenceDate) {
     const [hour, minute] = (item.timeOfDay || '17:00').split(':').map(Number);
     const time = `${hour % 12 || 12}:${String(minute).padStart(2, '0')} ${hour >= 12 ? 'PM' : 'AM'}`;
-    return item.dueOn < day
+    return isChoreOverdue(item, day)
       ? `Overdue since ${item.dueOn} at ${time}`
       : `Due ${item.dueOn === day ? 'today' : item.dueOn} at ${time}`;
   }
   if (item.startsOn > day) return `Starts ${item.startsOn}`;
   if (!item.dueOn) return 'Until completed';
-  return item.dueOn < day
+  return isChoreOverdue(item, day)
     ? `Overdue since ${item.dueOn}`
     : item.dueOn === day
       ? 'Due today'

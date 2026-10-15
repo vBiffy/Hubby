@@ -10,7 +10,33 @@ import {
   choreDay,
   choreDatesThrough,
   choreOccursOn,
+  isChoreOverdue,
 } from '../shared/chores.js';
+
+test('future views retain carried chores without making them overdue early', () => {
+  const item = {
+    title: 'Take out the trash',
+    startsOn: '2026-10-18',
+    dueOn: '2026-10-18',
+    done: false,
+  };
+  const [visible] = activeChores([item], '2026-10-19');
+  assert.ok(visible);
+  assert.equal(isChoreOverdue(visible, '2026-10-14'), false);
+  assert.doesNotMatch(choreStatus(visible, '2026-10-14'), /Overdue/);
+  assert.equal(choreStatus(visible, '2026-10-18'), 'Due today');
+  assert.equal(isChoreOverdue(visible, '2026-10-19'), true);
+  assert.equal(isChoreOverdue({ ...visible, done: true }, '2026-10-19'), false);
+
+  const [recurring] = activeChores(
+    [{ ...item, repeat: 'weekly', missedPolicy: 'carry', timeOfDay: '17:00' }],
+    '2026-10-19',
+  );
+  assert.equal(recurring.occurrenceDate, '2026-10-18');
+  assert.equal(choreStatus(recurring, '2026-10-14'), 'Due 2026-10-18 at 5:00 PM');
+  assert.equal(isChoreOverdue(recurring, '2026-10-18'), false);
+  assert.equal(isChoreOverdue(recurring, '2026-10-19'), true);
+});
 
 async function setup(sender = { configured: false }) {
   const repository = createMemoryRepository();

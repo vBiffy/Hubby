@@ -6,13 +6,19 @@
     "node": ">=22.12.0"
   },
   "scripts": {
+    "predev": "node --env-file-if-exists=.env scripts/local-postgres.js start-if-configured",
     "dev": "concurrently -k \"npm:dev:api\" \"npm:dev:web\"",
     "dev:api": "node --watch --env-file-if-exists=.env server/main.js",
     "dev:web": "vite --host 127.0.0.1",
     "build": "vite build",
     "start": "node --env-file-if-exists=.env server/main.js",
+    "prestart": "node --env-file-if-exists=.env scripts/local-postgres.js start-if-configured",
     "telegram:chat": "node --env-file-if-exists=.env server/telegramChat.js",
     "db:migrate": "node --env-file-if-exists=.env server/migrate.js",
+    "db:backup": "node --env-file-if-exists=.env server/backup.js",
+    "db:local:setup": "node --env-file-if-exists=.env scripts/local-postgres.js setup",
+    "db:local:start": "node --env-file-if-exists=.env scripts/local-postgres.js start",
+    "db:local:stop": "node --env-file-if-exists=.env scripts/local-postgres.js stop",
     "test": "node --test",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

@@ -1,5 +1,5 @@
 import { ChoreRow } from './Chores.jsx';
-import { activeChores } from '../../shared/chores.js';
+import { activeChores, choreDay } from '../../shared/chores.js';
 import { QuickReminders } from './QuickReminders.jsx';
 import { SportsCalendarDialog } from './SportsCalendar.jsx';
 import { HubNotes } from './HubNotes.jsx';
@@ -249,7 +249,7 @@ export function HubOverview({
                       <ChoreRow
                         key={`${item.id}:${item.occurrenceDate || 'single'}`}
                         item={item}
-                        day={selected}
+                        today={choreDay(now)}
                         onSave={onSaveChore}
                       />
                     ))}

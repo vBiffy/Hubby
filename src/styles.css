@@ -99,10 +99,21 @@ aside {
   gap: 10px;
 }
 .brand-icon {
+  /* Center the mark in a square instead of relying on text padding. */
+  display: inline-grid;
+  place-items: center;
+  width: 1.6em;
+  height: 1.6em;
+  flex-shrink: 0;
+  line-height: 1;
   background: var(--accent);
   color: white;
-  border-radius: 14px;
-  padding: 3px 11px;
+  border-radius: 15px 8px;
+  padding: 0;
+}
+.brand-icon > span {
+  /* Josefin Sans sits high in its line box; center the visible mark optically. */
+  transform: translateY(0.12em);
 }
 .eyebrow {
   font-size: 12px;
@@ -130,10 +141,16 @@ nav a.active {
   color: white;
 }
 nav a span {
+  display: inline-grid;
+  place-items: center;
   font-size: 23px;
   width: 26px;
+  height: 26px;
   flex: 0 0 26px;
+  line-height: 1;
   text-align: center;
+  /* Symbol fonts sit lower than the visible Josefin Sans labels. */
+  transform: translateY(-.5px);
 }
 .sidebar-bottom {
   margin-top: auto;

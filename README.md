@@ -17,19 +17,60 @@ Open http://localhost:5173. Memory mode starts empty and loses data on restart; 
 
 ## PostgreSQL
 
+### Local Windows development
+
+On this PC, PostgreSQL 18 is installed. Hubby's isolated development database uses
+port **5433**, leaving the existing PostgreSQL service on port 5432 unchanged.
+To initialize it and configure `.env`:
+
+```powershell
+npm.cmd run db:local:setup
+npm.cmd run dev
+```
+
+If the app is already running, stop it with Ctrl+C before starting it again so it
+loads the updated `.env`. Normal `npm run dev` and `npm start` automatically start
+this database when configured. The database runs until stopped or Windows shuts
+down; `npm run db:local:stop` stops it explicitly.
+
+Data and generated connection settings are in the ignored `.local/` directory.
+Keep this directory to preserve your local data. `npm run db:backup` saves a
+snapshot in `.local/backups/`. The original `.env` is preserved privately as
+`.local/env-before-postgres`. On another Windows PC, install PostgreSQL first;
+set `PG_BIN` to its bin directory if it differs from the PostgreSQL 18 default.
+This helper does not install PostgreSQL itself. The Pi uses its own installer below.
+
+### Other PostgreSQL installations
+
 Install Docker with Compose or use an existing PostgreSQL server. Copy `.env.example` to `.env`. Set `STORAGE=postgres`, add `POSTGRES_PASSWORD` with your own password, and use that password in `DATABASE_URL` (URL-encode special characters).
 
 ```sh
 docker compose up -d db
-npm run db:migrate
 npm run dev
 ```
 
-For existing PostgreSQL, create a database/user, set `DATABASE_URL`, skip Docker, and run the migration. The migration is explicit and idempotent; startup checks the schema. Docker stores data in a named volume. Back up with `pg_dump` before schema changes.
+For existing PostgreSQL, create a database/user, set `DATABASE_URL`, and skip Docker.
+Startup automatically initializes tables and applies changed schema revisions inside
+one transaction. Revisions are recorded and unchanged schemas are skipped on restart.
+`npm run db:migrate` remains available for an explicit check. Docker stores data in
+a named volume. `npm run db:backup` creates a compressed database snapshot when
+`pg_dump` is installed.
 
 ## Raspberry Pi
 
-Use Raspberry Pi OS 64-bit Desktop, Chromium, and a supported Node version. PostgreSQL can run on the Pi or another machine. Docker must be installed separately if using Compose.
+For a future Pi, use the prepared [local installation guide](docs/pi-setup.md).
+On Raspberry Pi OS 64-bit Desktop, the setup entry point is:
+
+```sh
+sudo bash scripts/install-pi.sh
+```
+
+It installs local PostgreSQL and the Node runtime, generates the database connection,
+builds the app, creates all tables, enables reboot/crash recovery, adds a desktop
+launcher, and schedules daily database backups. It has not yet been tested on Pi
+hardware. A Windows `.exe` would be a separate package; this is the Pi installer
+foundation. To set things up manually instead, use an existing PostgreSQL server
+and a supported Node version:
 
 ```sh
 npm ci
@@ -87,8 +128,8 @@ clock time across daylight saving changes; configure the Pi timezone accordingly
 The full agenda shows the last 30 days and next year; the month view expands the
 displayed month. Old events remain valid as non-repeating, household entries.
 
-For PostgreSQL, run `npm.cmd run db:migrate` after this update to enable family
-records and database-enforced unique colors. Memory mode needs no migration.
+PostgreSQL startup automatically enables family records and database-enforced
+unique colors. Memory mode needs no migration.
 Reassign a member's events before deleting that member.
 
 For meetings on multiple weekdays, choose **Repeat → Custom weekdays** and check
@@ -119,7 +160,7 @@ npm run format:check
 The browser entry point is `src/main.jsx`; the app shell lives in `src/App.jsx`.
 Feature screens and editors live in separate files under `src/components`.
 
-The **Groceries** tab (`/#groceries`) supports adding/editing items with optional quantities, checking off purchases, and deleting items. It uses the same configured storage as notes and events. After updating an existing PostgreSQL installation, run `npm.cmd run db:migrate` to allow grocery records; this preserves existing data. Memory mode needs no migration.
+The **Groceries** tab (`/#groceries`) supports adding/editing items with optional quantities, checking off purchases, and deleting items. It uses the same configured storage as notes and events. PostgreSQL startup automatically enables grocery records while preserving existing data. Memory mode needs no migration.
 
 ```sh
 npm test
@@ -285,8 +326,8 @@ there is no audible alarm. Active countdowns can be cancelled, and recent outcom
 are shown in the popup. Telegram delivery does not require the browser or popup
 open, but the API/Pi must keep running with internet access.
 
-**Existing PostgreSQL installs:** run `npm.cmd run db:migrate` once before using
-quick reminders; this adds the `quickReminders` record kind while preserving data.
+**Existing PostgreSQL installs:** startup automatically adds the `quickReminders`
+record kind while preserving data.
 Memory mode requires no migration but loses timers on API restart.
 
 The server checks local stored deadlines every five seconds, not Telegram updates.
@@ -372,9 +413,8 @@ claim prevents sending. Messages are claimed before delivery, and failed or
 uncertain deliveries are not automatically retried. Change the reminder time to
 schedule a new message. The API must stay running; the browser can be closed.
 
-PostgreSQL installations need `npm run db:migrate` to allow the new `chores`
-storage kind, then restart the API. Memory mode needs only an API restart and
-loses chores on restart. No automatic migration is enabled.
+PostgreSQL startup automatically enables chore storage. Memory mode loses chores
+on restart; use PostgreSQL for persistent household data.
 
 ### Recurring chores and missed occurrences
 

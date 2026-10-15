@@ -268,7 +268,24 @@ test('calendar, editor and reminder popup render without crashing', async () => 
     assert.doesNotMatch(favoriteSettings, /Your hub, your way/);
 
     const { HubOverview } = await vite.ssrLoadModule('/src/components/HubOverview.jsx');
-    const { Chores, ChoreEditor } = await vite.ssrLoadModule('/src/components/Chores.jsx');
+    const { Chores, ChoreEditor, ChoreRow } = await vite.ssrLoadModule(
+      '/src/components/Chores.jsx',
+    );
+    const futureChore = renderToStaticMarkup(
+      React.createElement(ChoreRow, {
+        item: {
+          title: 'Take out the trash',
+          startsOn: '2026-10-18',
+          dueOn: '2026-10-18',
+          occurrenceDate: '2026-10-18',
+          timeOfDay: '17:00',
+          done: false,
+        },
+        today: '2026-10-14',
+      }),
+    );
+    assert.doesNotMatch(futureChore, /chore-overdue|Overdue/);
+    assert.match(futureChore, /Due 2026-10-18 at 5:00 PM/);
     const choreMembers = [
       { id: 'mom', title: 'Mom', color: '#a64b78' },
       { id: 'dad', title: 'Dad', color: '#326d9c' },

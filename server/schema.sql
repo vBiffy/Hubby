@@ -1,4 +1,5 @@
--- Idempotent initial migration. Future schema changes should get numbered files.
+-- Applied transactionally by server/database.js, once per schema revision.
+-- Use npm run db:migrate or start the app rather than executing fragments.
 CREATE TABLE IF NOT EXISTS hub_items (
   id text PRIMARY KEY,
   kind text NOT NULL CONSTRAINT hub_items_kind_check
@@ -10,11 +11,9 @@ CREATE INDEX IF NOT EXISTS hub_items_kind_updated ON hub_items (kind, updated_at
 
 -- Also upgrade existing installations. Replacing only the kind constraint
 -- preserves all notes/events; the transaction avoids a gap in validation.
-BEGIN;
 ALTER TABLE hub_items DROP CONSTRAINT IF EXISTS hub_items_kind_check;
 ALTER TABLE hub_items ADD CONSTRAINT hub_items_kind_check
   CHECK (kind IN ('notes', 'events', 'groceries', 'members', 'quickReminders', 'chores'));
-COMMIT;
 
 -- Enforce uniqueness even when two screens save members at the same time.
 CREATE UNIQUE INDEX IF NOT EXISTS hub_members_unique_color
