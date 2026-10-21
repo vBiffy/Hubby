@@ -13,6 +13,21 @@ import {
 
 process.env.TZ = 'America/New_York';
 
+test('whole-household plans use every member color without changing assignments', () => {
+  const members = [
+    { id: 'alex', color: '#ff0000' },
+    { id: 'sam', color: '#0000ff' },
+  ];
+  const item = { memberIds: [] };
+  assert.equal(
+    planStyle(item, members).backgroundImage,
+    'linear-gradient(135deg, #ff0000 0% 50%, #0000ff 50% 100%)',
+  );
+  assert.deepEqual(item.memberIds, []);
+  assert.equal(planStyle(item, members.slice(0, 1)).backgroundColor, '#ff0000');
+  assert.equal(planStyle(item, []), undefined);
+});
+
 test('shared assignments persist, overlap with each participant, and protect member deletion', async () => {
   const hub = createHub(createMemoryRepository());
   const alex = await hub.save('members', { title: 'Alex', color: '#ff0000' });

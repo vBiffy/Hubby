@@ -434,7 +434,7 @@ export function App({ repository }) {
         >
           <span aria-hidden="true">{navigationOpen ? '\u2039' : '\u203a'}</span>
         </button>
-        <header>
+        <header className={tab === 'home' ? 'hub-header' : undefined}>
           <div>
             <p className="eyebrow">
               {clock.toLocaleDateString(undefined, {

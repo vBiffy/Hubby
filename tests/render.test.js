@@ -339,7 +339,7 @@ test('calendar, editor and reminder popup render without crashing', async () => 
         now: new Date('2026-10-10T12:00Z'),
       }),
     );
-    assert.equal((choresOnHub.match(/Wash dishes/g) || []).length, 2);
+    assert.equal((choresOnHub.match(/Wash dishes/g) || []).length, 6);
     assert.match(choresOnHub, /Complete Wash dishes/);
     const hub = renderToStaticMarkup(
       React.createElement(HubOverview, {
@@ -355,10 +355,11 @@ test('calendar, editor and reminder popup render without crashing', async () => 
         now: new Date('2026-10-09T09:00:00'),
       }),
     );
-    assert.match(hub, /Your week/);
-    assert.match(hub, /Today&#x27;s plans/);
+    assert.match(hub, /aria-label="Previous week"/);
+    assert.match(hub, /aria-label="Next week"/);
+    assert.match(hub, /Our week at a glance/);
     assert.doesNotMatch(hub, /Next game/);
-    assert.match(hub, /hub-family-track/);
+    assert.match(hub, /hub-timeline-scroll/);
     assert.doesNotMatch(hub, /Remember milk/);
     assert.match(hub, /Notes \(1\)/);
     assert.doesNotMatch(hub, /calendar-grid/);
@@ -397,12 +398,24 @@ test('calendar, editor and reminder popup render without crashing', async () => 
       React.createElement(QuickReminders, { repository: {} }),
     );
     assert.match(quickButton, /Quick reminders/);
-    const dadCard = familyHub.match(
-      /<section class="hub-person-day" aria-label="Dad[^]*?<\/section>/,
-    )[0];
-    assert.match(dadCard, /Dad meeting/);
-    assert.match(dadCard, /Family dinner/);
-    assert.doesNotMatch(dadCard, /Mom appointment/);
+    assert.match(familyHub, /Dad meeting/);
+    assert.match(familyHub, /Mom appointment/);
+    assert.match(familyHub, /Family dinner/);
+    const { timelineBlocks } = await vite.ssrLoadModule('/src/components/HubTimeline.jsx');
+    const day = new Date('2026-10-09T00:00:00');
+    const overlapping = timelineBlocks(
+      [
+        { id: 'a', startsAt: '2026-10-09T09:00:00', endsAt: '2026-10-09T10:00:00' },
+        { id: 'b', startsAt: '2026-10-09T09:30:00', endsAt: '2026-10-09T11:00:00' },
+        { id: 'c', startsAt: '2026-10-09T12:00:00', endsAt: '2026-10-09T13:00:00' },
+        { id: 'overnight', startsAt: '2026-10-08T23:00:00', endsAt: '2026-10-09T01:00:00' },
+      ],
+      day,
+    );
+    assert.equal(overlapping.find((b) => b.item.id === 'a').lanes, 2);
+    assert.equal(overlapping.find((b) => b.item.id === 'b').lane, 1);
+    assert.equal(overlapping.find((b) => b.item.id === 'c').lanes, 1);
+    assert.equal(overlapping.find((b) => b.item.id === 'overnight').top, 0);
     const { HubNotes } = await vite.ssrLoadModule('/src/components/HubNotes.jsx');
     const notesPopup = renderToStaticMarkup(
       React.createElement(HubNotes, {

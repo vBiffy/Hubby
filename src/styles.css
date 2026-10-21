@@ -64,7 +64,7 @@ select:focus-visible {
   --line: #e4e7df;
   min-height: 100vh;
   display: grid;
-  grid-template-columns: var(--navigation-width, 220px) minmax(0, 1fr);
+  grid-template-columns: var(--navigation-width, 200px) minmax(0, 1fr);
   transition: grid-template-columns 450ms ease-in-out;
   background: var(--background);
   color: var(--ink);
@@ -81,7 +81,7 @@ select:focus-visible {
   font-size: 19px;
 }
 aside {
-  padding: 34px 22px;
+  padding: 34px 18px;
   border-right: 1px solid var(--line);
   display: flex;
   flex-direction: column;
@@ -2351,7 +2351,7 @@ input[type='color'] {
 /* Keep the sidebar at its expanded width while the grid column closes.
    Moving that fixed-width panel avoids squeezing or wrapping its labels. */
 .app > aside {
-  width: 220px;
+  width: 200px;
   min-width: 0;
   overflow-x: clip;
   transition:
@@ -2381,7 +2381,7 @@ input[type='color'] {
   position: fixed;
   z-index: 30;
   top: 50dvh;
-  left: max(0px, calc(var(--navigation-width, 220px) - 16px));
+  left: max(0px, calc(var(--navigation-width, 200px) - 16px));
   transform: translateY(-50%);
   display: grid;
   place-items: center;
@@ -2943,5 +2943,253 @@ dialog.touch-keyboard-host {
   .overlay,
   .overlay > .dialog {
     transition: none;
+  }
+}
+
+/* The Hub week belongs beside the title, leaving the main panel for daily plans. */
+.hub-header {
+  flex-wrap: wrap;
+}
+.hub-header > div:first-child {
+  flex: 0 0 auto;
+}
+.hub-week-slot {
+  flex: 1 1 340px;
+  min-width: 0;
+  max-width: 560px;
+}
+.hub-week {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  min-width: 0;
+}
+.hub-week-arrow {
+  padding: 0;
+  min-height: 44px;
+  font-size: 24px;
+  border-radius: 12px;
+}
+.hub-week .hub-day-strip {
+  gap: 5px;
+}
+.hub-week .hub-day-strip button {
+  min-height: 68px;
+  padding: 6px 3px;
+  gap: 3px;
+  border-radius: 12px;
+}
+.hub-week .hub-day-strip strong {
+  font-size: 18px;
+}
+.hub-week .hub-day-dots {
+  min-height: 8px;
+}
+.hub-week .hub-day-dots i {
+  width: 5px;
+  height: 5px;
+}
+.hub-plans > .panel-heading > .actions {
+  flex-wrap: wrap;
+}
+.hub-plans > .panel-heading .shared-select {
+  width: 160px;
+}
+@media (max-width: 1250px) {
+  .hub-header .hub-week-slot {
+    order: 1;
+    flex-basis: 100%;
+    max-width: none;
+  }
+}
+
+/* Seven aligned days share one hour scroller, keeping their time scales identical. */
+.hub-timeline {
+  /* Quiet separators keep the plans, rather than the grid, in the foreground. */
+  --hub-grid-line: color-mix(in srgb, var(--ink) 12%, var(--surface));
+  --hub-grid-soft: color-mix(in srgb, var(--ink) 5%, var(--surface));
+  min-width: 0;
+  background: var(--surface);
+  border-radius: 12px;
+}
+.dark .hub-timeline { background: var(--surface); }
+.hub-timeline-head, .hub-timeline-grid {
+  display: grid;
+  grid-template-columns: 66px repeat(7, minmax(0, 1fr));
+}
+.hub-timeline-head {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  width: 100%;
+  padding: 4px 0 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--hub-grid-line);
+}
+.hub-timeline-head > section {
+  min-width: 0;
+  padding: 4px 8px;
+  border-left: 1px solid var(--hub-grid-line);
+  max-height: 180px;
+  overflow-y: auto;
+}
+.hub-timeline-head h3 { font-size: 15px; }
+.hub-timeline-head .chore-row { padding: 6px 0; font-size: 13px; }
+.hub-timeline-head .chore-row small { font-size: 11px; }
+.hub-all-day-plan { width: 100%; margin-top: 4px; font-size: 13px; }
+.hub-timeline-scroll {
+  height: max(320px, calc(100dvh - 270px));
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
+  scrollbar-gutter: stable;
+  border: 1px solid var(--hub-grid-line);
+  border-radius: 12px;
+}
+.hub-timeline-grid { height: 1536px; }
+.hub-time-labels span {
+  display: block;
+  height: 64px;
+  padding: 5px 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  text-align: right;
+  background: color-mix(in srgb, var(--ink) 2%, var(--surface));
+}
+.hub-hour-column {
+  position: relative;
+  border-left: 1px solid var(--hub-grid-line);
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--hub-grid-line) 0 1px,
+    transparent 1px 32px,
+    var(--hub-grid-soft) 32px 33px,
+    transparent 33px 64px
+  );
+}
+.hub-timed-plan {
+  position: absolute;
+  min-height: 0;
+  padding: 4px 6px;
+  text-align: left;
+  border-radius: 7px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 13px;
+}
+.hub-timed-plan strong { overflow-wrap: anywhere; }
+.hub-timed-plan small { font-size: 11px; }
+@media (max-width: 650px) {
+  .hub-timeline-head, .hub-timeline-grid {
+    grid-template-columns: 40px repeat(7, minmax(0, 1fr));
+  }
+  .hub-timeline-head > section { padding: 5px 3px; }
+  .hub-timeline-head h3, .hub-timed-plan { font-size: 11px; }
+}
+
+/* Indicators stay at the visible hour edges instead of scrolling with events. */
+.hub-timeline-viewport { position: relative; }
+.hub-timeline-indicators {
+  position: absolute;
+  inset: var(--hub-header-height, 32px) auto 0 1px;
+  width: var(--hub-grid-width, calc(100% - 17px));
+  display: grid;
+  grid-template-columns: 66px repeat(7, minmax(0, 1fr));
+  pointer-events: none;
+}
+.hub-day-indicators { position: relative; min-width: 0; }
+.hub-plan-edge {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  width: 44px;
+  min-height: 32px;
+  padding: 2px 4px;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px #0002;
+  background: var(--surface);
+  color: var(--accent);
+  font-size: 17px;
+  font-weight: 700;
+  pointer-events: auto;
+}
+.hub-plan-edge-up { top: 4px; }
+.hub-plan-edge-down { bottom: 4px; }
+@media (max-width: 650px) {
+  .hub-timeline-indicators {
+    grid-template-columns: 40px repeat(7, minmax(0, 1fr));
+  }
+}
+
+/* Give the Hub's hours the remaining window height, with compact outer gutters. */
+@media (min-width: 651px) {
+  .app:has(.hub-overview) > main {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    min-height: 600px;
+    padding: 18px 16px 12px;
+  }
+  .app:has(.hub-overview) > main > header {
+    flex-shrink: 0;
+    margin-bottom: 12px;
+  }
+  .app > main > .hub-overview {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .hub-overview > .hub-plans {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+  }
+  .hub-plans > .hub-timeline {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .hub-timeline-head { flex-shrink: 0; }
+  .hub-timeline-viewport { flex: 1; min-height: 0; }
+  .hub-timeline-scroll { height: 100%; }
+}
+
+/* Reserve arrow gutters in every layer so dates and hour columns stay aligned. */
+.hub-timeline-head,
+.hub-timeline-grid,
+.hub-timeline-indicators {
+  grid-template-columns: 66px repeat(7, minmax(0, 1fr)) 36px;
+}
+.hub-calendar-week-arrow {
+  display: grid;
+  place-items: center;
+  justify-self: center;
+  align-self: start;
+  width: 32px;
+  min-height: 32px;
+  margin: 0;
+  padding: 0;
+  border-radius: 16px;
+  margin-bottom: 4px;
+  background: var(--surface);
+  box-shadow: 0 2px 8px #0001;
+  font-size: 24px;
+  line-height: 1;
+}
+@media (max-width: 650px) {
+  .hub-timeline-head,
+  .hub-timeline-grid,
+  .hub-timeline-indicators {
+    grid-template-columns: 40px repeat(7, minmax(0, 1fr)) 36px;
   }
 }

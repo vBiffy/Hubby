@@ -130,14 +130,21 @@ export function planStyle(item, members) {
       color: '#ffffff',
     };
   }
-  const people = planMembers(item, members);
-  if (people.length < 2) return eventStyle(people[0]);
+  // An empty assignment means everyone, so include every household color.
+  const household = !item.sportsSource && !assignedMemberIds(item).length;
+  const people = household ? members : planMembers(item, members);
+  if (people.length < 2) {
+    const style = eventStyle(people[0]);
+    return household && style ? { ...style, color: '#000000' } : style;
+  }
   const bands = people.map(
     (person, index) =>
       `${person.color} ${(index * 100) / people.length}% ${((index + 1) * 100) / people.length}%`,
   );
-  // A small contrasting text backing remains readable across both light and dark colors.
-  return { backgroundImage: `linear-gradient(135deg, ${bands.join(', ')})`, color: '#ffffff' };
+  return {
+    backgroundImage: `linear-gradient(135deg, ${bands.join(', ')})`,
+    color: household ? '#000000' : '#ffffff',
+  };
 }
 
 export function durationMinutes(item) {

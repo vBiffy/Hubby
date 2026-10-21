@@ -11,7 +11,36 @@ import {
   choreDatesThrough,
   choreOccursOn,
   isChoreOverdue,
+  hubChores,
 } from '../shared/chores.js';
+
+test('Hub does not project future missed chores into subsequent days', () => {
+  const chore = {
+    id: 'trash',
+    title: 'Trash',
+    startsOn: '2026-10-18',
+    repeat: 'weekly',
+    timeOfDay: '19:00',
+    missedPolicy: 'carry',
+    completedDates: [],
+  };
+  const before = new Date('2026-10-17T12:00:00-04:00');
+  assert.equal(hubChores([chore], '2026-10-18', before).length, 1);
+  assert.equal(hubChores([chore], '2026-10-19', before).length, 0);
+  assert.equal(hubChores([chore], '2026-10-19', '2026-10-18T18:00:00-04:00').length, 0);
+  assert.equal(hubChores([chore], '2026-10-19', '2026-10-19T08:00:00-04:00').length, 1);
+  assert.equal(
+    hubChores(
+      [{ ...chore, completedDates: ['2026-10-18'] }],
+      '2026-10-19',
+      '2026-10-19T08:00:00-04:00',
+    ).length,
+    0,
+  );
+  const single = { ...chore, repeat: 'none', dueOn: '2026-10-18' };
+  assert.equal(hubChores([single], '2026-10-19', before).length, 0);
+  assert.equal(hubChores([single], '2026-10-18', before).length, 1);
+});
 
 test('future views retain carried chores without making them overdue early', () => {
   const item = {
