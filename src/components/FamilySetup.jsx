@@ -32,7 +32,6 @@ export function FamilySetup({ members, onSave, onContinue }) {
       aria-modal="true"
       aria-labelledby="family-setup-title"
     >
-      <p className="eyebrow">WELCOME TO HUBBY</p>
       <h1 id="family-setup-title">Let's meet your family</h1>
       <p>Add at least one family member with a unique calendar color to get started.</p>
       <FamilyMembers

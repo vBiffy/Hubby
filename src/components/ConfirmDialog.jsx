@@ -37,7 +37,6 @@ export function ConfirmDialog({
         if (!busy) onCancel();
       }}
     >
-      <p className="eyebrow">PLEASE CONFIRM</p>
       <h2 id={`${id}-title`}>{title}</h2>
       <p id={`${id}-message`} className="confirm-message">
         {message}

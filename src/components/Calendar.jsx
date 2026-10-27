@@ -110,7 +110,6 @@ export function Calendar({
     >
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">{readOnly ? 'THE SPORTS PLAN' : 'THE FAMILY PLAN'}</p>
           <h2>
             {month.toLocaleDateString(undefined, {
               month: 'long',

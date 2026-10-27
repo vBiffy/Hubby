@@ -1,3 +1,4 @@
+import { NavigationIcon } from './components/NavigationIcon.jsx';
 import { Chores, AddChoreButton } from './components/Chores.jsx';
 import { ChoreCelebration, celebrationPhrases } from './components/ChoreCelebration.jsx';
 import { TouchKeyboard } from './components/TouchKeyboard.jsx';
@@ -19,7 +20,13 @@ import { HubOverview } from './components/HubOverview.jsx';
 import { ReminderCenter } from './components/ReminderCenter.jsx';
 import { useReminders } from './hooks/useReminders.js';
 import { ConfirmDialog } from './components/ConfirmDialog.jsx';
-import { moveOccurrence, occurrences, overlaps, localDateTime } from '../shared/calendar.js';
+import {
+  moveOccurrence,
+  occurrences,
+  overlaps,
+  localDateTime,
+  eventStyle,
+} from '../shared/calendar.js';
 function calendarConflicts(draft, items) {
   if (!draft.endsAt && !draft.allDay) return [];
   const start = new Date(draft.startsAt);
@@ -35,18 +42,18 @@ function calendarConflicts(draft, items) {
   );
 }
 const pageTitles = {
-  calendar: 'A little planning goes a long way',
-  chores: 'Everyone lends a hand',
-  notes: 'The family notebook',
-  groceries: 'Stock up on the little things',
-  weather: 'A look outside',
-  sports: 'Make room for game day',
-  settings: 'Make yourself at home',
+  calendar: 'Calendar',
+  chores: 'Chores',
+  notes: 'Notes',
+  groceries: 'Groceries',
+  weather: 'Weather',
+  sports: 'Sports',
+  settings: 'Customize',
 };
 
 const defaults = {
   name: 'Our hub',
-  accent: '#264e42',
+  accent: '#ba7321',
   dark: false,
   large: false,
   weekStart: 0,
@@ -61,6 +68,11 @@ function readSettings() {
     return {
       ...defaults,
       ...saved,
+      // Follow the material palette for previous defaults; retain deliberate custom colors.
+      accent:
+        !saved.accent || ['#264e42', '#743f46', '#745632', '#c6a575'].includes(saved.accent)
+          ? defaults.accent
+          : saved.accent,
       name: saved.name === 'Our kitchen' ? 'Our hub' : saved.name || defaults.name,
     };
   } catch {
@@ -364,7 +376,11 @@ export function App({ repository }) {
     return (
       <div
         className={`app setup-shell ${settings.dark ? 'dark' : ''}`}
-        style={{ '--accent': settings.accent }}
+        style={{
+          '--accent': settings.accent,
+          '--accent-ink': eventStyle({ color: settings.accent }).color,
+        }}
+        data-screen={tab}
       >
         <TouchKeyboard />
         {!loaded ? (
@@ -388,7 +404,11 @@ export function App({ repository }) {
       className={`app ${settings.dark ? 'dark' : ''} ${settings.large ? 'large' : ''} ${
         navigationOpen ? '' : 'navigation-collapsed'
       }`}
-      style={{ '--accent': settings.accent }}
+      style={{
+        '--accent': settings.accent,
+        '--accent-ink': eventStyle({ color: settings.accent }).color,
+      }}
+      data-screen={tab}
     >
       <TouchKeyboard />
       <aside id="app-navigation" inert={!navigationOpen}>
@@ -398,22 +418,27 @@ export function App({ repository }) {
           </span>
           hubby
         </a>
-        <p className="eyebrow" style={{ fontSize: '9px' }}>
-          A LITTLE MORE, TOGETHER
-        </p>
+        <p className="brand-tagline">A little more, together.</p>
         <nav>
           {[
-            ['home', '⌂', 'Hub'],
-            ['calendar', '▦', 'Calendar'],
-            ['chores', '\u2611', 'Chores'],
-            ['notes', '≡', 'Notes'],
-            ['groceries', '\u{1F6D2}', 'Groceries'],
-            ['weather', '\u2600', 'Weather'],
-            ['sports', '\u26bd', 'Sports'],
-            ['settings', '⚙', 'Customize'],
-          ].map(([id, icon, label]) => (
-            <a key={id} href={`#${id}`} className={tab === id ? 'active' : ''}>
-              <span>{icon}</span>
+            ['home', 'Hub'],
+            ['calendar', 'Calendar'],
+            ['chores', 'Chores'],
+            ['notes', 'Notes'],
+            ['groceries', 'Groceries'],
+            ['weather', 'Weather'],
+            ['sports', 'Sports'],
+            ['settings', 'Customize'],
+          ].map(([id, label]) => (
+            <a
+              key={id}
+              href={`#${id}`}
+              className={tab === id ? 'active' : ''}
+              aria-current={tab === id ? 'page' : undefined}
+            >
+              <span>
+                <NavigationIcon name={id} />
+              </span>
               {label}
             </a>
           ))}
@@ -436,7 +461,7 @@ export function App({ repository }) {
         </button>
         <header className={tab === 'home' ? 'hub-header' : undefined}>
           <div>
-            <p className="eyebrow">
+            <p className="page-date">
               {clock.toLocaleDateString(undefined, {
                 weekday: 'long',
                 month: 'long',

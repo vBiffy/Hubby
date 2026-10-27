@@ -83,7 +83,7 @@ const degrees = (value) => `${Math.round(value)}°F`;
 export function WeatherSummary({ weather, error, loading }) {
   return (
     <a href="#weather" className="weather-summary" aria-label="Open Lansing weather">
-      <span className="picker-caption">LANSING, MI</span>
+      <span className="picker-caption">Lansing, MI</span>
       {weather ? (
         <>
           <strong>{degrees(weather.temperature)}</strong>
@@ -102,8 +102,7 @@ export function Weather({ weather, error, loading, onRefresh }) {
     <section className="panel weather-panel">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">LANSING, MICHIGAN</p>
-          <h2>Your local weather</h2>
+          <h2>Lansing, Michigan</h2>
         </div>
         <button disabled={loading} onClick={onRefresh}>
           {loading ? 'Updating…' : 'Refresh'}

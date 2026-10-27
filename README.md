@@ -87,6 +87,20 @@ This starter has no authentication and binds to localhost by default. Add authen
 
 ## Development and customization
 
+### UI styling
+
+The app keeps Josefin Sans and uses a walnut, aged-bronze, and warm cream palette. Edit
+`src/ui.css` for visual choices: theme colors, typography, navigation, controls,
+screen surfaces, and dialogs. It loads after `src/styles.css`, which retains
+layout mechanics, calendar alignment, animations, and responsive behavior.
+Keep calendar row heights and column widths in `styles.css`; changing those
+independently can misalign the headings, hours, and offscreen-plan indicators.
+
+The accent chosen in Customize remains in use. New profiles and previous default colors use amber `#BA7321`
+accent; deliberate custom color choices are preserved. Member and sports
+colors remain data-driven. Navigation icons are inline SVGs in
+`src/components/NavigationIcon.jsx`, so they render consistently across platforms.
+
 ### Popup reminders
 
 Calendar entries can be dragged to another day without changing their local time.

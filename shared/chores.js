@@ -74,13 +74,15 @@ export function isChoreOverdue(item, today = choreDay()) {
 }
 
 // The Hub previews actual assignments, not hypothetical missed future chores.
-// Keep carry-forward behavior on the chore board; only show a carried occurrence
-// in another day's Hub column once its deadline has really passed.
+// Overdue work appears only in today's Hub column, not on its original date.
+// Future columns contain their own scheduled assignments instead.
 export function hubChores(items, day, now = Date.now()) {
   const today = choreDay(now);
   return activeChores(items, day).filter((item) => {
+    if (isChoreOverdue(item, today)) return day === today;
     const scheduled = item.occurrenceDate || item.dueOn || item.startsOn;
     if (scheduled >= day) return true;
+    if (day > today) return false;
     if (!item.dueOn) return item.startsOn <= today;
     return isChoreOverdue(item, today);
   });

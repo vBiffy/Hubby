@@ -3,7 +3,7 @@ import { Select } from './Select.jsx';
 export function Settings({ settings, onChange, onReset }) {
   return (
     <section className="panel settings">
-      <h2>Your hub, your way</h2>
+      <h2>Display preferences</h2>
       <p>
         Display preferences are saved on this screen. Notes and events are shared through the
         database.
@@ -37,8 +37,8 @@ export function Settings({ settings, onChange, onReset }) {
       {[
         ['dark', 'Dark theme'],
         ['large', 'Larger text'],
-        ['agenda', 'Show coming up widget'],
-        ['notes', 'Show notes widget'],
+        ['agenda', 'Show the weekly planner'],
+        ['notes', 'Show Notes shortcut on the Hub'],
       ].map(([key, label]) => (
         <label className="toggle" key={key}>
           <input

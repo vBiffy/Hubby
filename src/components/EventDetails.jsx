@@ -45,7 +45,6 @@ export function EventDetails({
         if (!busy) onClose();
       }}
     >
-      <p className="eyebrow">{type.toUpperCase()} DETAILS</p>
       <h2 id={`${id}-title`}>{item.title}</h2>
       <span
         className={`reminder-type ${assignedMemberIds(item).length > 1 || item.sportsColors?.length > 1 ? 'shared-event' : ''}`}

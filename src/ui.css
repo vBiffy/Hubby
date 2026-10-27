@@ -1,0 +1,753 @@
+/*
+ * Material reference: a dark-stained walnut cabinet, aged bronze hardware, and recipe paper.
+ * styles.css owns layout/interaction mechanics; this file owns visual treatment.
+ * Keep calendar track sizes in styles.css so headers, hours and overlays agree.
+ */
+:root {
+  background: #271d15;
+  color: #f3e7d2;
+}
+
+.app {
+  /* The whole workspace shares the cabinet's walnut, with lighter inset surfaces. */
+  color-scheme: dark;
+  --background: #271d15;
+  --surface: #34271d;
+  --ink: #f3e7d2;
+  --subtle: #c2ad8d;
+  --line: #5b4733;
+  --paper-muted: #3d2e20;
+  --bronze: #c6a575;
+  --bronze-light: #c6a575;
+  --wood: #302116;
+  --wood-ink: #f3e7d2;
+  --wood-muted: #c2ad8d;
+  --radius: 4px;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.app.dark {
+  --background: #1c140f;
+  --surface: #281d15;
+  --ink: #f4e9d6;
+  --subtle: #c3b196;
+  --line: #534331;
+  --paper-muted: #322519;
+  --wood: #241a12;
+}
+
+.app.large {
+  font-size: 19px;
+}
+
+/* Navigation reads as a permanent index, not a stack of oversized buttons. */
+.app > aside {
+  background: var(--wood);
+  color: var(--wood-ink);
+  border-right: 1px solid #1b120c;
+  padding: 26px 16px 18px;
+  gap: 18px;
+}
+.brand {
+  gap: 10px;
+  font-size: 30px;
+  letter-spacing: -1px;
+}
+.brand-icon {
+  border-radius: 5px;
+  background: var(--bronze-light);
+  color: var(--wood);
+}
+.brand-tagline {
+  color: var(--wood-muted);
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0 0 22px 4px;
+}
+nav {
+  gap: 4px;
+}
+nav a {
+  min-height: 48px;
+  padding: 10px 12px;
+  gap: 12px;
+  border-radius: 6px;
+  font-size: 16px;
+  border-left: 3px solid transparent;
+  transition:
+    background 180ms ease,
+    color 180ms ease;
+}
+nav a.active {
+  color: var(--wood-ink);
+  background: #ffffff08;
+  border-left-color: var(--bronze-light);
+  font-weight: 700;
+}
+nav a:hover {
+  background: #ffffff0c;
+}
+nav a > span {
+  display: grid;
+  place-items: center;
+  transform: none;
+}
+.sidebar-bottom {
+  color: var(--wood-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+.navigation-toggle {
+  box-shadow: 0 2px 6px #0000000c;
+}
+
+/* One clear page title, with a useful date instead of decorative eyebrow copy. */
+main > header {
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.page-date {
+  margin: 0 0 4px;
+  font-size: 14px;
+  color: var(--subtle);
+}
+h1 {
+  font-size: 32px;
+  line-height: 1.15;
+  letter-spacing: -1px;
+}
+h2 {
+  font-size: 23px;
+  line-height: 1.25;
+  letter-spacing: -0.5px;
+}
+h3 {
+  font-size: 18px;
+  line-height: 1.35;
+}
+header time {
+  font-size: 23px;
+  font-variant-numeric: tabular-nums;
+  color: var(--subtle);
+}
+.panel-heading {
+  margin-bottom: 22px;
+  align-items: center;
+}
+.panel-heading h2 span {
+  font-size: 14px;
+  font-weight: 400;
+}
+.hint,
+.empty {
+  color: var(--subtle);
+  line-height: 1.5;
+}
+.empty {
+  padding: 20px 0;
+  font-size: 15px;
+}
+
+/* Controls share a restrained shape and stay large enough for a finger. */
+button {
+  border-radius: var(--radius);
+  min-height: 44px;
+  font-weight: 500;
+  box-shadow: none;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+button:hover {
+  filter: none;
+  border-color: var(--subtle);
+}
+button.primary,
+.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink, #241a12);
+}
+.primary:hover {
+  filter: brightness(0.94);
+}
+input:not([type='checkbox']):not([type='radio']):not([type='color']),
+textarea,
+.shared-select > button,
+.calendar-view-trigger {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  min-height: 44px;
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--subtle);
+  opacity: 0.8;
+}
+label {
+  line-height: 1.4;
+}
+fieldset {
+  border-color: var(--line);
+  border-radius: var(--radius);
+}
+legend {
+  font-weight: 500;
+}
+.shared-select-menu,
+.calendar-view-menu {
+  border-radius: 9px;
+  padding: 5px;
+  box-shadow: 0 12px 28px #00000018;
+}
+.shared-select-menu button {
+  border-radius: 5px;
+}
+.shared-select-menu button[aria-selected='true'] {
+  font-weight: 700;
+}
+.picker-caption {
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: 13px;
+}
+.picker-date,
+.picker-time {
+  background: var(--paper-muted);
+  border-radius: var(--radius);
+}
+.actions > a {
+  color: var(--ink);
+  text-underline-offset: 4px;
+}
+
+/* Use the page itself as the container; keep paper surfaces for actual content. */
+main > .panel:not(dialog),
+main > .customize > [role='tabpanel'] > .panel {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 4px 0 20px;
+}
+.app .hub-overview > .hub-plans {
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+.hub-plans > .panel-heading {
+  padding: 3px 4px 14px;
+  margin-bottom: 0;
+}
+.hub-plans > .panel-heading h2 {
+  font-size: 20px;
+}
+.hub-plans > .panel-heading .actions {
+  gap: 6px;
+}
+.hub-plans > .panel-heading .actions > button {
+  font-size: 14px;
+  padding: 8px 10px;
+}
+.hub-plans > .panel-heading .actions > a {
+  font-size: 13px;
+}
+.hub-timeline {
+  --hub-grid-line: color-mix(in srgb, var(--ink) 11%, var(--surface));
+}
+.hub-timeline-scroll {
+  border-radius: 4px;
+}
+.hub-timeline-head {
+  padding-top: 8px;
+}
+.hub-timeline-head h3 {
+  font-size: 14px;
+  font-weight: 600;
+}
+.hub-time-labels span {
+  font-weight: 500;
+  color: var(--subtle);
+}
+.hub-timed-plan {
+  border-radius: 4px;
+  border: 0;
+}
+.hub-calendar-week-arrow,
+.hub-plan-edge {
+  border-radius: 50%;
+  box-shadow: none;
+  border: 1px solid var(--line);
+}
+.weather-summary {
+  border-radius: 0;
+  border: 0;
+  border-left: 1px solid var(--line);
+  padding: 0 0 0 18px;
+  background: transparent;
+}
+.weather-summary strong {
+  font-size: 25px;
+}
+
+/* Calendar: ruled planner pages with color reserved for people's appointments. */
+.calendar-grid {
+  gap: 0;
+  border-top: 1px solid var(--line);
+}
+.calendar-grid .day {
+  border-radius: 0;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  min-height: 110px;
+  padding: 8px 6px;
+}
+.calendar-grid .day:nth-child(7n) {
+  border-right: 0;
+}
+.weekday {
+  font-size: 13px;
+  font-weight: 600;
+}
+.calendar-event {
+  border-radius: 4px;
+}
+.calendar-navigation button {
+  box-shadow: none;
+}
+.agenda {
+  border-left: 2px solid var(--line);
+}
+
+/* Notebook and shopping list have distinct, practical page structures. */
+.note-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr));
+  align-items: start;
+  gap: 20px;
+}
+.note {
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--surface);
+  padding: 22px;
+}
+.note h3 {
+  font-size: 21px;
+}
+.note p {
+  font-size: 16px;
+  line-height: 1.65;
+}
+.note .actions {
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.grocery-form {
+  padding: 20px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  margin: 20px 0;
+}
+.grocery-items {
+  gap: 0;
+  max-width: 1000px;
+}
+.grocery-item {
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  padding: 16px 4px;
+}
+.grocery-check {
+  gap: 14px;
+}
+.grocery-check span {
+  font-size: 19px;
+}
+.grocery-check small {
+  font-size: 14px;
+}
+.grocery-item:has(input:checked) {
+  opacity: 0.6;
+}
+
+/* Chore board: individual lists, not a row of identical floating cards. */
+.chore-presets {
+  border-bottom: 1px solid var(--line);
+  padding: 0 0 18px;
+  gap: 7px;
+}
+.chore-presets button {
+  border-radius: 6px;
+  background: var(--surface);
+  font-size: 14px;
+}
+.hub-family-picker button {
+  border-radius: 6px;
+}
+.chore-person {
+  border: 0;
+  border-left: 2px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  padding: 8px 20px 20px;
+  flex-basis: 310px;
+}
+.chore-person h3 {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.chore-person .hub-member-avatar {
+  width: 32px;
+  height: 32px;
+  flex-basis: 32px;
+  font-size: 15px;
+}
+.chore-row {
+  padding: 16px 0;
+}
+.chore-row strong {
+  font-size: 16px;
+}
+.chore-row small {
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+/* Weather is a forecast, with a dominant current reading and quiet data strips. */
+.weather-today {
+  background: transparent;
+  border-radius: 0;
+  padding: 12px 0 24px;
+  margin-bottom: 26px;
+}
+.weather-current > strong {
+  font-size: clamp(48px, 6vw, 78px);
+  font-weight: 500;
+  letter-spacing: -3px;
+}
+.weather-current .weather-icon {
+  color: var(--subtle);
+}
+.weather-details > div {
+  background: transparent;
+  border-left: 1px solid var(--line);
+  border-radius: 0;
+}
+.weather-details dd {
+  font-size: 24px;
+}
+.forecast-heading h3 {
+  font-size: 20px;
+}
+.weather-day,
+.weather-hour {
+  background: transparent;
+  border: 0;
+  border-left: 1px solid var(--line);
+  border-radius: 0;
+}
+.weather-day:first-child,
+.weather-hour:first-child {
+  border-left: 0;
+}
+.weather-day .weather-icon,
+.weather-hour .weather-icon {
+  color: var(--subtle);
+}
+.weather-forecast {
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+}
+
+/* Sports borrows the hierarchy of a printed score sheet. */
+.sports-controls {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 16px;
+  gap: 16px;
+}
+.sports-day-picker {
+  padding: 12px 0;
+  gap: 4px;
+}
+.sports-day-picker button {
+  border-radius: 4px;
+  border-color: transparent;
+  background: transparent;
+}
+.sports-day-picker button[aria-pressed='true'] {
+  color: var(--ink);
+  border-color: var(--line);
+  border-bottom: 3px solid var(--accent);
+  background: var(--surface);
+}
+.sports-games {
+  gap: 12px;
+}
+.sports-game {
+  border-radius: 6px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  padding: 18px;
+}
+.sports-game:has(.sports-favorite) {
+  border-left: 3px solid var(--accent);
+}
+.sports-team-name {
+  font-size: 18px;
+}
+.sports-team > strong {
+  font-variant-numeric: tabular-nums;
+  font-size: 27px;
+}
+.sports-game-meta {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+.sports-favorite {
+  border-radius: 3px;
+  background: var(--paper-muted);
+  color: var(--ink);
+}
+.ap-rank {
+  border-radius: 3px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Preferences use a tabbed index and a narrower reading/form measure. */
+.customize-tabs {
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 28px;
+  gap: 20px;
+}
+.customize-tabs button {
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  padding: 10px 4px;
+  color: var(--subtle);
+}
+.customize-tabs button[aria-selected='true'] {
+  border-bottom-color: var(--accent);
+  background: transparent;
+  color: var(--ink);
+  font-weight: 700;
+}
+.settings {
+  max-width: 700px;
+}
+.settings > p {
+  max-width: 55ch;
+  color: var(--subtle);
+}
+.settings > label {
+  border-bottom: 1px solid var(--line);
+  padding: 14px 0;
+}
+.settings h2,
+.family-members h2,
+.sports-settings h2 {
+  margin-bottom: 12px;
+}
+
+/* Dialogs and the touchscreen keyboard belong to the same physical palette. */
+dialog.panel,
+.overlay > .dialog {
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 24px 80px #00000026;
+}
+dialog::backdrop {
+  background: #1c120c99;
+}
+.overlay {
+  background: #1c120c99;
+}
+.touch-keyboard {
+  background: var(--paper-muted);
+  border-top: 1px solid var(--line);
+  box-shadow: 0 -6px 24px #00000012;
+}
+.touch-keyboard button {
+  border-radius: 6px;
+  background: var(--surface);
+}
+.family-setup {
+  border-top: 2px solid var(--bronze);
+  padding-top: 28px;
+}
+
+@media (max-width: 1100px) {
+  h1 {
+    font-size: 28px;
+  }
+  .brand-tagline {
+    font-size: 12px;
+  }
+  .hub-plans > .panel-heading {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .weather-today {
+    padding: 18px;
+  }
+}
+@media (max-width: 650px) {
+  .app > aside {
+    padding: 12px;
+    gap: 8px;
+  }
+  .brand-tagline {
+    display: none;
+  }
+  nav a {
+    border-left: 0;
+    border-bottom: 2px solid transparent;
+    min-height: 44px;
+  }
+  nav a.active {
+    border-bottom-color: var(--accent);
+  }
+  main > header {
+    padding-bottom: 12px;
+    gap: 12px;
+  }
+  h1 {
+    font-size: 25px;
+  }
+  h2 {
+    font-size: 21px;
+  }
+  .weather-today {
+    padding: 14px;
+  }
+  .note-grid {
+    grid-template-columns: 1fr;
+  }
+  .grocery-form {
+    padding: 14px;
+  }
+  .calendar-grid .day {
+    min-height: 80px;
+    padding: 4px 2px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  nav a,
+  button {
+    transition: none;
+  }
+}
+
+/* The current day is a useful accent, not an additional badge. */
+.hub-timeline-head section[data-today] h3 {
+  color: var(--accent);
+  font-weight: 700;
+}
+.hub-timeline-head section[data-today] {
+  box-shadow: inset 0 -2px var(--accent);
+}
+.dark .hub-timeline-head section[data-today] h3 {
+  color: color-mix(in srgb, var(--accent) 45%, var(--ink));
+}
+@media (min-width: 1200px) and (min-height: 760px) {
+  .weather-today {
+    padding: 18px 22px;
+    margin-bottom: 18px;
+  }
+  .weather-panel .weather-forecast {
+    padding-top: 12px;
+    margin-top: 16px;
+  }
+  .weather-panel .weather-day,
+  .weather-panel .weather-hour {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+  .weather-panel .weather-icon {
+    width: 36px;
+    height: 36px;
+  }
+  .weather-panel .weather-current .weather-icon {
+    width: 54px;
+    height: 54px;
+  }
+  .weather-panel .weather-condition {
+    min-height: 0;
+  }
+}
+
+/* Light bronze needs dark lettering on filled controls, including the keypad. */
+.day.today .day-date > span,
+.picker-day[aria-pressed='true'],
+.sports-leagues button[aria-pressed='true'],
+.sports-view-toggle button[aria-pressed='true'],
+.touch-keyboard-actions button:last-child {
+  color: var(--accent-ink, #241a12);
+}
+.touch-keyboard-actions button:last-child {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.hub-member-avatar {
+  color: var(--accent-ink, #241a12);
+}
+.grocery-form,
+.note,
+.sports-game {
+  background: var(--surface);
+  border-color: var(--line);
+}
+.error {
+  background: #482b20;
+  color: #ffd7b5;
+  border: 1px solid #98684e;
+}
+
+/* Named pigment presets supplement the custom picker; assigned colors are unavailable. */
+.member-color-palette {
+  margin: 4px 0 18px;
+  padding: 14px;
+  border: 1px solid var(--line);
+}
+.member-color-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.member-color-preset {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: 14px;
+  background: transparent;
+}
+.member-preset-chip {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  border-radius: 50%;
+  border: 1px solid #ffffff30;
+}
+.member-color-preset[aria-pressed='true'] {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.member-color-preset:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+.member-color-palette .hint {
+  margin: 12px 0 8px;
+  font-size: 13px;
+}

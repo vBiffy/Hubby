@@ -364,7 +364,6 @@ export function Chores({ repository, items, members, onSave, onDelete, now = new
     <section className="panel chore-board">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">A LITTLE HELP, TOGETHER</p>
           <h2>Family chores</h2>
         </div>
         <button className="primary" onClick={() => add()}>

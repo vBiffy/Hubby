@@ -21,7 +21,7 @@ export function Notes({ items, onSave, onDelete, compact = false, onOpen }) {
     }
   }
   return (
-    <section className="panel">
+    <section className="panel notes-panel">
       <div className="panel-heading">
         <h2>
           Notes <span>{items.length}</span>
@@ -96,7 +96,7 @@ export function Notes({ items, onSave, onDelete, compact = false, onOpen }) {
         ))}
       </div>
       {!items.length && (
-        <p className="empty">A place for shopping lists, recipes, and little reminders.</p>
+        <p className="empty">No notes yet. Add a note to keep it here.</p>
       )}
       {compact && (
         <button className="text-button" onClick={onOpen}>

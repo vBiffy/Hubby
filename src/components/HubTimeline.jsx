@@ -169,7 +169,7 @@ export function HubTimeline({
             </button>
             {columns.map(({ day, key }) => {
               return (
-                <section key={key}>
+                <section key={key} data-today={key === dateKey(now) || undefined}>
                   <h3>
                     {day.toLocaleDateString([], {
                       weekday: 'short',

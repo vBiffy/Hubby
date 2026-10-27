@@ -103,7 +103,7 @@ export function Agenda({ items, onEdit, onSave, onDelete, compact = false, membe
           editing or deleting a repeating plan.
         </p>
       )}
-      {!visible.length && <p className="empty">Nothing planned. Make room for something good.</p>}
+      {!visible.length && <p className="empty">No upcoming plans.</p>}
     </section>
   );
 }

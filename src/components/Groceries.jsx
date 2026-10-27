@@ -62,7 +62,6 @@ export function Groceries({ items, onSave, onDelete, repository }) {
     <section className="panel groceries">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">FOR THE NEXT SHOP</p>
           <h2>
             Grocery list <span>{remaining} to pick up</span>
           </h2>

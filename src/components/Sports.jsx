@@ -112,7 +112,6 @@ export function Sports({
     <section className="panel sports-panel">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">GAME DAY, TOGETHER</p>
           <h2>Games & scores</h2>
         </div>
         <div className="sports-header-actions">

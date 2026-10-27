@@ -47,7 +47,7 @@ test('calendar, editor and reminder popup render without crashing', async () => 
     const { Calendar } = await vite.ssrLoadModule('/src/components/Calendar.jsx');
     const props = { weekStart: 0, onSelect() {}, onEdit() {} };
     const empty = renderToStaticMarkup(React.createElement(Calendar, { ...props, items: [] }));
-    assert.match(empty, /THE FAMILY PLAN/);
+    assert.doesNotMatch(empty, /THE FAMILY PLAN/);
 
     const items = Array.from({ length: 3 }, (_, index) => ({
       id: `event-${index}`,
@@ -254,7 +254,7 @@ test('calendar, editor and reminder popup render without crashing', async () => 
       }),
     );
     assert.match(customize, /role="tablist"/);
-    assert.match(customize, /Your hub, your way/);
+    assert.match(customize, /Display preferences/);
     assert.doesNotMatch(customize, /Your teams/);
     const favoriteSettings = renderToStaticMarkup(
       React.createElement(Customize, {
@@ -265,7 +265,7 @@ test('calendar, editor and reminder popup render without crashing', async () => 
       }),
     );
     assert.match(favoriteSettings, /Your teams/);
-    assert.doesNotMatch(favoriteSettings, /Your hub, your way/);
+    assert.doesNotMatch(favoriteSettings, /Display preferences/);
 
     const { HubOverview } = await vite.ssrLoadModule('/src/components/HubOverview.jsx');
     const { Chores, ChoreEditor, ChoreRow } = await vite.ssrLoadModule(
@@ -339,7 +339,8 @@ test('calendar, editor and reminder popup render without crashing', async () => 
         now: new Date('2026-10-10T12:00Z'),
       }),
     );
-    assert.equal((choresOnHub.match(/Wash dishes/g) || []).length, 6);
+    // One overdue row today: its title and accessible completion label.
+    assert.equal((choresOnHub.match(/Wash dishes/g) || []).length, 2);
     assert.match(choresOnHub, /Complete Wash dishes/);
     const hub = renderToStaticMarkup(
       React.createElement(HubOverview, {
@@ -446,7 +447,7 @@ test('calendar, editor and reminder popup render without crashing', async () => 
     const separateCalendar = renderToStaticMarkup(
       React.createElement(SportsCalendar, sportsCalendarProps),
     );
-    assert.match(separateCalendar, /THE SPORTS PLAN/);
+    assert.doesNotMatch(separateCalendar, /THE SPORTS PLAN/);
     assert.match(separateCalendar, /Favorite team match/);
     assert.doesNotMatch(separateCalendar, /Touch a date to add a plan/);
     const calendarPopup = renderToStaticMarkup(

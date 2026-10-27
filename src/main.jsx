@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { App } from './App.jsx';
 import { api } from './adapters/api.js';
 import './styles.css';
+import './ui.css';
 
 // Browser composition root: mount the application with its HTTP adapter.
 createRoot(document.getElementById('root')).render(

@@ -42,6 +42,32 @@ test('Hub does not project future missed chores into subsequent days', () => {
   assert.equal(hubChores([single], '2026-10-18', before).length, 1);
 });
 
+test('already-overdue chores carry into today without filling future Hub columns', () => {
+  const chore = {
+    id: 'trash',
+    title: 'Take out the trash',
+    startsOn: '2026-10-25',
+    repeat: 'weekly',
+    timeOfDay: '19:00',
+    missedPolicy: 'carry',
+    completedDates: [],
+  };
+  const now = '2026-10-26T10:00:00-04:00';
+  assert.deepEqual(hubChores([chore], '2026-10-25', now), []);
+  assert.equal(hubChores([chore], '2026-10-26', now).length, 1);
+  for (const day of ['2026-10-27', '2026-10-28', '2026-10-29', '2026-10-30', '2026-10-31']) {
+    assert.deepEqual(hubChores([chore], day, now), []);
+  }
+  // Next Sunday's assignment remains visible, with no projected missed older occurrence.
+  const next = hubChores([chore], '2026-11-01', now);
+  assert.equal(next.length, 1);
+  assert.equal(next[0].occurrenceDate, '2026-11-01');
+  const single = { ...chore, repeat: 'none', dueOn: '2026-10-25' };
+  assert.deepEqual(hubChores([single], '2026-10-25', now), []);
+  assert.equal(hubChores([single], '2026-10-26', now).length, 1);
+  assert.deepEqual(hubChores([single], '2026-10-27', now), []);
+});
+
 test('future views retain carried chores without making them overdue early', () => {
   const item = {
     title: 'Take out the trash',
