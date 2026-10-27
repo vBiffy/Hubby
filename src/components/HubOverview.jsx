@@ -16,6 +16,7 @@ export function HubOverview({
   showAgenda,
   showNotes,
   onOpenEvent,
+  onCreateEvent,
   now,
   onSaveNote,
   onDeleteNote,
@@ -76,6 +77,7 @@ export function HubOverview({
             onChangeWeek={changeWeek}
             now={now}
             onOpenEvent={onOpenEvent}
+            onCreateEvent={onCreateEvent}
             onSaveChore={onSaveChore}
           />
         </section>

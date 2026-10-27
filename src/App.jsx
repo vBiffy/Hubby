@@ -285,7 +285,7 @@ export function App({ repository }) {
     setScope('occurrence');
     setDetails(item);
   }
-  function editEvent(item, day = dayKey(new Date())) {
+  function editEvent(item, day = dayKey(new Date()), startTime = '09:00') {
     setDetails(null);
     setError('');
     // datetime-local represents local wall time. Convert to ISO only on save,
@@ -308,7 +308,7 @@ export function App({ repository }) {
         : {
             title: '',
             type: 'event',
-            startsAt: `${day}T09:00`,
+            startsAt: `${day}T${startTime}`,
             done: false,
             repeat: 'none',
             repeatUntil: '',
@@ -513,6 +513,9 @@ export function App({ repository }) {
             showAgenda={settings.agenda}
             showNotes={settings.notes}
             onOpenEvent={showEvent}
+            onCreateEvent={(startsAt) =>
+              editEvent(null, startsAt.slice(0, 10), startsAt.slice(11, 16))
+            }
             now={clock}
           />
         )}

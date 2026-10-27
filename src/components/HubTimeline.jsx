@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { ChoreRow } from './Chores.jsx';
+import { hubStartAt } from '../../shared/hubTimeline.js';
 import { hubChores, choreDay } from '../../shared/chores.js';
 import {
   assignedMemberIds,
@@ -66,9 +67,11 @@ export function HubTimeline({
   onChangeWeek,
   now,
   onOpenEvent,
+  onCreateEvent,
   onSaveChore,
 }) {
   const scroll = useRef(null);
+  const tap = useRef({ pending: null, down: null, opened: 0 });
   const timeline = useRef(null);
   const previousView = useRef(null);
   const [viewport, setViewport] = useState({ top: 8 * HOUR_HEIGHT, height: 400 });
@@ -140,6 +143,12 @@ export function HubTimeline({
         : 'smooth',
     });
   }
+  function createAt(event, day) {
+    // Existing plan buttons keep their detail/edit behavior.
+    if (!onCreateEvent || event.target !== event.currentTarget) return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    onCreateEvent(hubStartAt(day, event.clientY - bounds.top, bounds.height));
+  }
   return (
     <div className="hub-timeline" ref={timeline}>
       <div className="hub-timeline-viewport">
@@ -149,14 +158,16 @@ export function HubTimeline({
           tabIndex={0}
           role="region"
           aria-label="Sunday through Saturday hourly calendar; scroll vertically for more hours"
-          onScroll={(event) =>
+          onScroll={(event) => {
+            tap.current.pending = null;
+            tap.current.down = null;
             setViewport({
               top: event.currentTarget.scrollTop,
               height:
                 event.currentTarget.clientHeight -
                 event.currentTarget.firstElementChild.offsetHeight,
-            })
-          }
+            });
+          }}
         >
           <div className="hub-timeline-head">
             <button
@@ -218,7 +229,53 @@ export function HubTimeline({
               ))}
             </div>
             {columns.map(({ key, blocks }) => (
-              <div className="hub-hour-column" key={key}>
+              <div
+                className="hub-hour-column"
+                key={key}
+                onDoubleClick={(event) => {
+                  // Touch double taps can also generate a synthetic dblclick.
+                  if (Date.now() - tap.current.opened < 600) return;
+                  createAt(event, key);
+                }}
+                onPointerDown={(event) => {
+                  if (event.pointerType === 'mouse' || event.target !== event.currentTarget) {
+                    tap.current.pending = null;
+                    return;
+                  }
+                  tap.current.down = { x: event.clientX, y: event.clientY, time: Date.now() };
+                }}
+                onPointerCancel={() => {
+                  tap.current.down = null;
+                  tap.current.pending = null;
+                }}
+                onPointerUp={(event) => {
+                  if (event.pointerType === 'mouse') return;
+                  const down = tap.current.down;
+                  tap.current.down = null;
+                  const time = Date.now();
+                  if (
+                    !down ||
+                    time - down.time > 300 ||
+                    Math.hypot(event.clientX - down.x, event.clientY - down.y) > 12
+                  ) {
+                    tap.current.pending = null;
+                    return;
+                  }
+                  const previous = tap.current.pending;
+                  if (
+                    previous &&
+                    previous.day === key &&
+                    time - previous.time < 400 &&
+                    Math.hypot(event.clientX - previous.x, event.clientY - previous.y) < 24
+                  ) {
+                    tap.current.pending = null;
+                    tap.current.opened = time;
+                    createAt(event, key);
+                  } else {
+                    tap.current.pending = { day: key, time, x: event.clientX, y: event.clientY };
+                  }
+                }}
+              >
                 {blocks.map(({ item, top, bottom, lane, lanes }) => (
                   <button
                     className="hub-timed-plan"
